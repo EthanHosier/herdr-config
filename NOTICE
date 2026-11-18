@@ -1,7 +1,7 @@
 Herdr Drag Splits
 
-The layout and the drag-tabs and drag-pane mods are derived from the
-Herdr app's main layout, tabs mod and pane mod, version 0.1.16:
+The layout and the drag-tabs, drag-pane and codex-tab-menu mods are derived from the
+Herdr app's main layout, tabs mod, pane mod and menu mod, version 0.1.16:
 https://github.com/herdrdev/herdr-app
 
 Herdr is distributed under the Apache License, Version 2.0 (see LICENSE).

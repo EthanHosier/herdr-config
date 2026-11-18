@@ -58,7 +58,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 ## Use the layout
 
-**New tabs:** the top-bar **+** button and **Cmd+T** open Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The adjacent **⌄** menu still offers a plain terminal and other agents. On local macOS, the launcher prefers ChatGPT's bundled Codex when available, because it includes the required code-mode helper; otherwise it uses the configured Codex launcher or `codex` from the shell. Remote spaces use that machine's configured launcher. Each Codex session runs with `--no-daemon`.
+**New tabs:** the tab right-click menu’s **New tab**, the top-bar **+** button and **Cmd+T** open Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The adjacent **⌄** menu still offers a plain terminal and other agents. On local macOS, the launcher prefers ChatGPT's bundled Codex when available, because it includes the required code-mode helper; otherwise it uses the configured Codex launcher or `codex` from the shell. Remote spaces use that machine's configured launcher. Each Codex session runs with `--no-daemon`.
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
@@ -75,6 +75,7 @@ Tab-to-split moves support **single-terminal tabs in the same space**. Detaching
 | `layouts/drag-splits.json` | Custom layout based on Herdr's main layout |
 | `layouts/drag-splits.svg` | Layout settings preview |
 | `mods/drag-tabs/` | Tab bar and tab-to-split dragging |
+| `mods/codex-tab-menu/` | Tab context menu with Codex as the New tab action |
 | `mods/drag-pane/` | Pane headers and pane-to-tab dragging |
 | `mods/tab-drop/` | Drop overlay and Python helper for terminal moves |
 | `settings.json`, `keys.json` | Personal preferences and shortcuts |
@@ -86,6 +87,7 @@ Validate after editing mods:
 herdr-app check ~/.config/herdr-app/mods/drag-tabs
 herdr-app check ~/.config/herdr-app/mods/drag-pane
 herdr-app check ~/.config/herdr-app/mods/tab-drop
+herdr-app check ~/.config/herdr-app/mods/codex-tab-menu
 ```
 
 ## Return to the default UI
