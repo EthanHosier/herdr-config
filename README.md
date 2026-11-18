@@ -79,6 +79,7 @@ Tab-to-split moves support **single-terminal tabs in the same space**. Detaching
 | `mods/drag-pane/` | Pane headers and pane-to-tab dragging |
 | `mods/tab-drop/` | Drop overlay and Python helper for terminal moves |
 | `settings.json`, `keys.json` | Personal preferences and shortcuts |
+| `programs.json`, `my-icons/` | Codex icon override using the OpenAI logo |
 | `.gitignore` | Keeps generated files and runtime state local |
 
 Validate after editing mods:

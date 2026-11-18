@@ -9,3 +9,6 @@ Changes add tab-to-split dragging, pane-to-tab dragging, a translucent
 drop overlay and custom tab-name preservation. The derived JavaScript
 files include a modification notice; mod/layout metadata retains the
 original cloned_from version.
+
+OpenAI logo SVG: Lobe Icons (https://github.com/lobehub/lobe-icons).
+See my-icons/LICENSE-lobe-icons for its license. OpenAI marks belong to OpenAI.
