@@ -89,7 +89,7 @@ function menuIcon(command) {
 
 // The key bound to a command, for the hint on the right.
 function shortcut(name, args) {
-  if (name === "drag-tabs.new-codex") return keys().find(b => b.section === "layout:drag-splits" && b.action === name)?.keys ?? "";
+  if (name === "drag-tabs.new-codex") return "";
   // `pane.split:right` binds pane.split with { direction: "right" }.
   const value = args && Object.values(args)[0];
   const k = keys().find((b) => b.section === "global" && (b.action === name || b.action === `${name}:${value}`));

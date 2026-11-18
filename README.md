@@ -58,7 +58,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 ## Use the layout
 
-**New tabs:** the tab right-click menu’s **New tab**, the top-bar **+** button and **Cmd+T** open Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The adjacent **⌄** menu still offers a plain terminal and other agents. On local macOS, the launcher prefers ChatGPT's bundled Codex when available, because it includes the required code-mode helper; otherwise it uses the configured Codex launcher or `codex` from the shell. Remote spaces use that machine's configured launcher. Each Codex session runs with `--no-daemon`.
+**New tabs:** only the tab right-click menu’s **New tab** action opens Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The top-bar **+** opens the tab-type selector. **Cmd+T** retains its original plain-terminal behavior. On local macOS, the launcher prefers ChatGPT's bundled Codex when available, because it includes the required code-mode helper; otherwise it uses the configured Codex launcher or `codex` from the shell. Remote spaces use that machine's configured launcher. Each Codex session runs with `--no-daemon`.
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
