@@ -58,7 +58,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 ## Use the layout
 
-**New tabs:** only the tab right-click menu’s **New tab** action opens Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The top-bar **+** opens the tab-type selector. **Cmd+T** retains its original plain-terminal behavior. The launcher uses the configured Codex command from Herdr’s program table, defaulting to `codex` resolved by the target machine’s shell. It does not select a ChatGPT-bundled binary automatically. Each Codex session runs with `--no-daemon`.
+**New tabs:** only the tab right-click menu’s **New tab** action opens Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The top-bar **+** opens the tab-type selector. **Cmd+T** retains its original plain-terminal behavior. The launcher uses the configured Codex command from Herdr’s program table, defaulting to `codex` resolved by the target machine’s shell. It does not select a ChatGPT-bundled binary automatically. The launcher removes `--no-daemon` from Herdr’s suggested command, keeping Codex’s normal daemon behavior.
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
@@ -74,7 +74,7 @@ On the machine where you expect Codex to run, compare `type -a codex` and `codex
 
 A Herdr remote space created through **Settings → Machines** launches new tabs on that remote machine. Typing `ssh` inside a local terminal does not make its Herdr space remote: new tabs still start locally. In that case, add the host through Herdr Machines and create/select a space on it.
 
-The context-menu launcher adds `--no-daemon` and YOLO mode flags; typing `codex` without flags can therefore have different permissions even when it resolves to the same executable.
+The context-menu launcher adds only the YOLO mode flag, `--dangerously-bypass-approvals-and-sandbox`, and removes `--no-daemon` if Herdr suggests it. This keeps the usual Codex daemon behavior with YOLO permissions.
 
 ## Files
 

@@ -53,9 +53,8 @@ export default class Tabs extends View {
       try {
         const agents = await knownAgents({ on: space?.machine });
         const codex = agents.find(agent => agent.key === "codex");
-        const argv = [...(codex?.run ?? ["codex"])];
+        const argv = (codex?.run ?? ["codex"]).filter(arg => arg !== "--no-daemon");
         // Let the target machine's shell resolve its configured Codex launcher.
-        if (!argv.includes("--no-daemon")) argv.push("--no-daemon");
         if (!argv.includes("--dangerously-bypass-approvals-and-sandbox")) argv.push("--dangerously-bypass-approvals-and-sandbox");
         run("tab.new", { space: space?.id, argv });
       } catch (error) {
