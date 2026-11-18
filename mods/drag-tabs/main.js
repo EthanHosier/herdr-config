@@ -2,7 +2,7 @@
 // Modified to add tab/pane dragging and preserve custom names.
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
-import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings, notify, nextCommand, checking, knownAgents, exec } from "herdr";
+import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings, notify, nextCommand, checking, knownAgents } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -53,14 +53,8 @@ export default class Tabs extends View {
       try {
         const agents = await knownAgents({ on: space?.machine });
         const codex = agents.find(agent => agent.key === "codex");
-        let argv = [...(codex?.run ?? ["codex"])];
-        // This Mac's standalone development build lacks the code-mode helper.
-        // Prefer ChatGPT's complete bundle for the default local macOS launch.
-        if (!space?.machine && window().platform === "macos" && argv[0] === "codex") {
-          const bundled = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex";
-          const available = await exec("test", ["-x", bundled]);
-          if (available.code === 0) argv[0] = bundled;
-        }
+        const argv = [...(codex?.run ?? ["codex"])];
+        // Let the target machine's shell resolve its configured Codex launcher.
         if (!argv.includes("--no-daemon")) argv.push("--no-daemon");
         if (!argv.includes("--dangerously-bypass-approvals-and-sandbox")) argv.push("--dangerously-bypass-approvals-and-sandbox");
         run("tab.new", { space: space?.id, argv });

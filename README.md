@@ -58,7 +58,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 ## Use the layout
 
-**New tabs:** only the tab right-click menu’s **New tab** action opens Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The top-bar **+** opens the tab-type selector. **Cmd+T** retains its original plain-terminal behavior. On local macOS, the launcher prefers ChatGPT's bundled Codex when available, because it includes the required code-mode helper; otherwise it uses the configured Codex launcher or `codex` from the shell. Remote spaces use that machine's configured launcher. Each Codex session runs with `--no-daemon`.
+**New tabs:** only the tab right-click menu’s **New tab** action opens Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The top-bar **+** opens the tab-type selector. **Cmd+T** retains its original plain-terminal behavior. The launcher uses the configured Codex command from Herdr’s program table, defaulting to `codex` resolved by the target machine’s shell. It does not select a ChatGPT-bundled binary automatically. Each Codex session runs with `--no-daemon`.
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
@@ -67,6 +67,14 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 Custom names follow the terminal through repeated moves and appear in pane headers. Metadata is stored on the live terminal as `herdr.drag-tab-name`, outside this repo.
 
 Tab-to-split moves support **single-terminal tabs in the same space**. Detaching currently requires at least two terminal panes. Moving whole split trees, cross-space transfers and mod-panel transfers are not supported. These are personal clones, so Herdr updates do not overwrite them, but future app releases may require compatibility updates.
+
+## If a new tab launches a different Codex
+
+On the machine where you expect Codex to run, compare `type -a codex` and `codex --version` in a plain terminal. Herdr loads the target machine’s shell configuration, but its agent launcher does not expand shell aliases. Use a shell function or executable wrapper if your normal `codex` command is an alias. Alternatively, add a `run` array to the existing `programs.codex` entry in `programs.json`, for example `"run": ["/path/to/preferred/codex"]`. Preserve the icon fields. That path must exist on every machine where the launcher is used, so a wrapper named on PATH is usually easier to share between machines.
+
+A Herdr remote space created through **Settings → Machines** launches new tabs on that remote machine. Typing `ssh` inside a local terminal does not make its Herdr space remote: new tabs still start locally. In that case, add the host through Herdr Machines and create/select a space on it.
+
+The context-menu launcher adds `--no-daemon` and YOLO mode flags; typing `codex` without flags can therefore have different permissions even when it resolves to the same executable.
 
 ## Files
 

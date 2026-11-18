@@ -10,7 +10,7 @@ The standard Herdr sidebar, tab bar, terminal cards, Files/Changes panel and sta
 
 ## How it behaves
 
-Only the tab right-click menu’s New tab action opens Codex with `--no-daemon` and `--dangerously-bypass-approvals-and-sandbox`. The + button opens the original tab-type selector, and Cmd+T keeps its original plain-terminal behavior. Resolve the configured Codex launcher through `knownAgents`; on local macOS prefer the complete ChatGPT-bundled binary if the default command is `codex` and that bundle is executable.
+Only the tab right-click menu’s New tab action opens Codex with `--no-daemon` and `--dangerously-bypass-approvals-and-sandbox`. The + button opens the original tab-type selector, and Cmd+T keeps its original plain-terminal behavior. Resolve the configured Codex launcher through `knownAgents` and let the target machine’s shell find it. Do not hardcode a ChatGPT-bundled executable; a portable config must use the same configured command on each target.
 
 Drag a single-terminal tab down from the tab bar to split it beside another tab's focused pane. Left/right thirds select horizontal placement; the upper/lower thirds of the middle column select vertical placement. The center cancels. Release commits the move; Escape cancels. Drag a split pane's title to detach it; its overlay accepts the top 12% of the window, with a 72px minimum.
 
