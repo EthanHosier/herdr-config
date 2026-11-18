@@ -2,7 +2,7 @@
 // Modified to add tab/pane dragging and preserve custom names.
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
-import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings, notify, nextCommand, checking } from "herdr";
+import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings, notify, nextCommand, checking, knownAgents, exec } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -36,6 +36,7 @@ export default class Tabs extends View {
         const command = await nextCommand();
         if (command === "preview-drop") this.openDrop({});
         if (command === "preview-detach") this.openDrop({ mode: "detach" });
+        if (command === "new-codex") this.newCodex(cx);
       }
     });
     this.pressed = null;
@@ -44,6 +45,29 @@ export default class Tabs extends View {
     try { this.panels = JSON.parse(localStorage.getItem("panels") ?? "{}"); } catch { this.panels = {}; }
     if (!this.panels || typeof this.panels !== "object" || Array.isArray(this.panels)) this.panels = {};
     this.swipe = { acc: 0, steps: 0, at: 0, last: 0 };
+  }
+
+  newCodex(cx) {
+    const space = spaces().find(s => s.active);
+    cx.spawn(async cx => {
+      try {
+        const agents = await knownAgents({ on: space?.machine });
+        const codex = agents.find(agent => agent.key === "codex");
+        let argv = [...(codex?.run ?? ["codex"])];
+        // This Mac's standalone development build lacks the code-mode helper.
+        // Prefer ChatGPT's complete bundle for the default local macOS launch.
+        if (!space?.machine && window().platform === "macos" && argv[0] === "codex") {
+          const bundled = "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex";
+          const available = await exec("test", ["-x", bundled]);
+          if (available.code === 0) argv[0] = bundled;
+        }
+        if (!argv.includes("--no-daemon")) argv.push("--no-daemon");
+        if (!argv.includes("--dangerously-bypass-approvals-and-sandbox")) argv.push("--dangerously-bypass-approvals-and-sandbox");
+        run("tab.new", { space: space?.id, argv });
+      } catch (error) {
+        notify({ title: "Could not open Codex", body: String(error), level: "error" });
+      }
+    });
   }
 
   startDrag(e, cx) {
@@ -186,7 +210,8 @@ export default class Tabs extends View {
       .child(h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_center().gap(3).overflow_x_scrollbar().track_scroll(this.scroll)
         .on_size_change((_size, cx) => { if (active >= 0) { this.scroll.scroll_to_item(active); cx.notify(); } })
         .children(shown.map(item)))
-      .child(button("tab-new", "+", () => openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 })))
+      .child(button("tab-new", "+", (_e, cx) => this.newCodex(cx)))
+      .child(button("tab-new-menu", "⌄", () => openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 })))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/drag-tabs/win-min.svg").size(16) : "−", () => run("window.minimize")))

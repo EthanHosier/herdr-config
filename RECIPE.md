@@ -10,6 +10,8 @@ The standard Herdr sidebar, tab bar, terminal cards, Files/Changes panel and sta
 
 ## How it behaves
 
+The top-bar + button and Cmd+T open Codex with `--no-daemon` and `--dangerously-bypass-approvals-and-sandbox`. Keep a separate dropdown for the standard new-terminal/agent menu. Resolve the configured Codex launcher through `knownAgents`; on local macOS prefer the complete ChatGPT-bundled binary if the default command is `codex` and that bundle is executable.
+
 Drag a single-terminal tab down from the tab bar to split it beside another tab's focused pane. Left/right thirds select horizontal placement; the upper/lower thirds of the middle column select vertical placement. The center cancels. Release commits the move; Escape cancels. Drag a split pane's title to detach it; its overlay accepts the top 12% of the window, with a 72px minimum.
 
 The existing tab/header status treatment remains: a native spinner for working, a blocked indicator for attention, a done dot and ordinary idle titles. Custom names follow the terminal across moves and appear in its pane header. Header buttons still split, zoom and close panes. Herdr's native center grip still rearranges splits within a tab.
