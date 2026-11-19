@@ -7,8 +7,8 @@
 // this pane. Props from the app: { pane, terminal }. Click: focus the pane.
 
 import { View, div, svg, image } from "gpui-kit";
-import { h_flex } from "gpui-base";
-import { panes, props, run, theme, home, layout, openOverlay, settings, spaces, terminals } from "herdr";
+import { h_flex, v_flex, Textarea, TextareaState, TextView } from "gpui-base";
+import { panes, props, run, theme, home, layout, openOverlay, settings, spaces, terminals, shared, setShared, checking } from "herdr";
 
 // Match the first visible tab frame, including the active child of a stack.
 function paneFrame(node) {
@@ -38,7 +38,23 @@ function folder(cwd) {
 }
 
 export default class Pane extends View {
-  init() { this.hovered = false; this.dragStart = null; }
+  init() {
+    this.hovered = false; this.dragStart = null;
+    const labels = terminals().find(t => t.address === props()?.terminal)?.labels ?? {};
+    this.notesId = labels["herdr.notes-id"];
+    this.notesKey = this.notesId ? "agent-notes.text." + this.notesId : null;
+    this.input = TextareaState.new({ placeholder: "Write notes in Markdown…", value: (this.notesKey && shared(this.notesKey)) || "", rows: 4 });
+    this.notesLoaded = Boolean(this.notesKey);
+    this.editing = !this.input.value() || shared("agent-notes.mode." + this.notesId) === "edit";
+    this.input.on("change", (_e, cx) => {
+      if (this.notesKey && this.notesLoaded) setShared(this.notesKey, this.input.value());
+      cx.notify();
+    });
+  }
+
+  close() {
+    if (!checking() && this.notesKey && this.notesLoaded) setShared(this.notesKey, this.input.value());
+  }
 
   startDrag(e, cx) {
     const start = this.dragStart;
@@ -78,15 +94,42 @@ export default class Pane extends View {
     const t = theme();
     const p = this.me();
     if (!p) return div();
-    const savedName = terminals().find(t => t.address === p.terminal)?.labels?.["herdr.drag-tab-name"];
+    const labels = terminals().find(t => t.address === p.terminal)?.labels ?? {};
+    const savedName = labels["herdr.drag-tab-name"];
+    if (labels["herdr.notes-id"] && labels["herdr.notes-id"] !== this.notesId) {
+      this.notesId = labels["herdr.notes-id"];
+      this.notesKey = "agent-notes.text." + this.notesId;
+      this.notesLoaded = false;
+      const key = this.notesKey;
+      cx.spawn(async cx => {
+        if (this.notesKey !== key) return;
+        this.input.set_value(shared(key) ?? "");
+        this.editing = !this.input.value() || shared("agent-notes.mode." + this.notesId) === "edit";
+        this.notesLoaded = true;
+        cx.notify();
+      });
+    }
+    const notesOpen = labels["herdr.notes-header"] === "1";
+    if (notesOpen && !this.notesWasOpen && this.notesKey) {
+      const key = this.notesKey;
+      this.notesLoaded = false;
+      cx.spawn(async cx => {
+        if (this.notesKey !== key) return;
+        this.input.set_value(shared(key) ?? "");
+        this.editing = !this.input.value() || shared("agent-notes.mode." + this.notesId) === "edit";
+        this.notesLoaded = true;
+        cx.notify();
+      });
+    }
+    this.notesWasOpen = notesOpen;
     const name = p.mod === "agent-notes" ? "Notes" : savedName || ((p.program?.agent || p.program?.shell) && p.program.name) || p.title || p.program?.name || "shell";
     const pic = icon(p.program, 14, t.dim);
     const st = p.status;
     const pane = p.pane;
     const bottom = paneFrame(layout())?.header?.position === "bottom";
-    return h_flex()
+    const title = h_flex()
       .id(`pane-head-${pane}`)
-      .size_full()
+      .h(30).w_full().flex_none()
       .px(10)
       .gap(8)
       .items_center()
@@ -120,5 +163,21 @@ export default class Pane extends View {
         .child(this.button(t, `ph-z-${pane}`, p.zoomed ? "unzoom" : "zoom", "pane.zoom", { pane }))
         .child(this.button(t, `ph-x-${pane}`, "close", "pane.close", { pane })))
       .when(p.mod === "agent-notes", el => el.child(this.button(t, `notes-close-${pane}`, "close", "pane.close", { pane })));
+
+    return v_flex().size_full().min_h(0).bg(t.background).child(title)
+      .when(notesOpen, el => el.child(v_flex().flex_1().min_h(0).px(12).py(6).gap(5).bg(t.surface).border_b(1).border_color(t.border)
+        .child(h_flex().flex_none().items_center().justify_between()
+          .child(div().text_size(10).font_semibold().text_color(t.muted).child("NOTES"))
+          .child(div().id(`edit-notes-${pane}`).px(5).py(2).rounded(3).text_size(11).text_color(t.muted).cursor_pointer()
+            .hover(s => s.bg(t.hover).text_color(t.foreground))
+            .on_click((_e, cx) => {
+              this.editing = !this.editing;
+              setShared("agent-notes.mode." + this.notesId, this.editing ? "edit" : "preview");
+              if (this.editing) this.input.focus();
+              cx.notify();
+            }).child(this.editing ? "Preview" : "Edit")))
+        .when(this.editing, el => el.child(Textarea.new(this.input).flex_1().min_h(0).w_full().text_size(12).text_color(t.foreground)))
+        .when(!this.editing, el => el.child(div().id(`markdown-notes-${pane}`).flex_1().min_h(0).overflow_y_scrollbar().text_size(12).text_color(t.foreground)
+          .child(TextView.markdown(`notes-${pane}`, this.input.value() || "*No notes yet. Choose Edit to add some.*"))))));
   }
 }

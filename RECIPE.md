@@ -16,7 +16,7 @@ Drag a single-terminal tab down from the tab bar to split it beside another tab'
 
 The existing tab/header status treatment remains: a native spinner for working, a blocked indicator for attention, a done dot and ordinary idle titles. Custom names follow the terminal across moves and appear in its pane header. Header buttons still split, zoom and close panes. Herdr's native center grip still rearranges splits within a tab.
 
-The terminal/header right-click menu’s Show notes / Hide notes item, immediately above Split right, toggles a companion `agent-notes` mod pane below a terminal. Note text autosaves to `shared("agent-notes.text." + notesId)` on every edit and on close. A UUID stored as the terminal’s `herdr.notes-id` label survives moves; `herdr.notes-pane` identifies the current notes pane. Close and reopen companions around terminal transfers, including a destination’s notes, to keep each note below its own agent. Preserve hidden/open state and reject attempts to close a real terminal as though it were a notes pane. The native new split defaults to half height; people resize its divider.
+The terminal/header right-click menu’s Show notes / Hide notes item, immediately above Split right, toggles `herdr.notes-header` on the clicked terminal. Markdown and its editor are drawn inside `drag-pane`, beneath the 30px title strip. Text autosaves to `shared("agent-notes.text." + notesId)` using the same UUID stored as `herdr.notes-id`. There is no separate pane to move. Native dragging therefore carries the notes along with the terminal header. Keep the old editor only for migration of already-saved companion panes. The tab bar sets the layout’s header height to 190px while any notes are shown in the active tab, or 30px otherwise. Herdr shares this height, so other panes in the tab reserve the same space even when their own notes are hidden.
 
 ## Built from
 
@@ -40,5 +40,5 @@ Tab-to-split supports one terminal in the source tab, within the same space. Det
 - The overlay fills the window and the selected side highlight fills its height.
 - Installation backs up previous copies and leaves personal session state and settings untouched.
 
-- Notes save to disk, survive hide/show and manual close/reopen, and retain their UUID and text through all four split directions and detach.
-- Moving an agent with notes preserves its process ID and name, and does not orphan the destination agent’s notes.
+- Notes save to disk, survive header hide/show, and retain their UUID and text through native swaps, all four split directions and detach.
+- Moving an agent preserves its process ID and name; notes are contained in its header and cannot be left as an orphan companion pane.

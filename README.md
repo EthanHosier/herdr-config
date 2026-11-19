@@ -62,16 +62,18 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
-- **Agent notes:** right-click a terminal or its header and choose **Show notes** / **Hide notes**, directly above **Split right**. Text saves automatically; hiding or closing the notes pane does not delete it. Drag the divider to make the notes section smaller. Herdr initially gives a new companion pane half of its parent; the current public API does not expose an initial split-height setting.
+- **Agent notes:** right-click a terminal or its title bar and choose **Show notes** / **Hide notes**, directly above **Split right**. Markdown notes appear inside the expanded pane header. Choose **Edit** to change the source and **Preview** to render it. Text saves automatically; hiding notes does not delete it. There is no separate notes pane to move.
 - **Cancel:** press Escape or release in an unhighlighted section.
 
 Custom names follow the terminal through repeated moves and appear in pane headers. Metadata is stored on the live terminal as `herdr.drag-tab-name`, outside this repo.
 
-Tab-to-split moves support **single-terminal tabs in the same space**, including their optional notes pane. Detaching currently requires at least two terminal panes. The attached notes move with their agent, including when both source and destination have notes. Moving whole split trees, cross-space transfers and unrelated mod-panel transfers are not supported. These are personal clones, so Herdr updates do not overwrite them, but future app releases may require compatibility updates.
+Tab-to-split moves support **single-terminal tabs in the same space**, including their optional header notes. Detaching currently requires at least two terminal panes. Notes are part of the terminal’s header, so native pane dragging, swaps, and tab/split transfers keep them with the agent automatically. Moving whole split trees, cross-space transfers and unrelated mod-panel transfers are not supported. These are personal clones, so Herdr updates do not overwrite them, but future app releases may require compatibility updates.
 
 ### Notes persistence
 
-Notes belong to the live terminal, rather than a tab ID or split-pane ID. A stable UUID is kept as its `herdr.notes-id` label. Text is autosaved in this Herdr window’s local `shared.json`, under `agent-notes.text.<UUID>`. This survives layout switches, reloads, app restarts, hiding/showing, and our tab/split moves while retaining the terminal’s identity. Two agents have separate notes. Closing an agent retains its saved text in local state, but new terminals do not automatically inherit old notes.
+Notes belong to the live terminal, rather than a tab ID or split-pane ID. Visibility is stored as the terminal’s `herdr.notes-header` label. A stable UUID is kept as its `herdr.notes-id` label. Text is autosaved in this Herdr window’s local `shared.json`, under `agent-notes.text.<UUID>`. This survives layout switches, reloads, app restarts, hiding/showing, and our tab/split moves while retaining the terminal’s identity. Two agents have separate notes. Closing an agent retains its saved text in local state, but new terminals do not automatically inherit old notes. Older companion notes are closed and migrated when toggled, preserving their text.
+
+**Header sizing:** Herdr shares header height across panes in a layout. The header expands to 190px while any notes are shown in the active tab, and returns to 30px when none are shown. Other panes in that tab reserve the same header height even when their own notes are hidden.
 
 **Note contents are private local state and are excluded from Git.** Cloning this repo on another computer transfers the notes UI, not note contents. Remote terminals use the same UI feature, but the text is saved on the computer running the Herdr window; cross-computer note synchronization is not implemented.
 
@@ -91,9 +93,9 @@ The context-menu launcher adds only the YOLO mode flag, `--dangerously-bypass-ap
 | `layouts/drag-splits.svg` | Layout settings preview |
 | `mods/drag-tabs/` | Tab bar and tab-to-split dragging |
 | `mods/codex-tab-menu/` | Tab context menu with Codex as the New tab action |
-| `mods/drag-pane/` | Pane headers and pane-to-tab dragging |
-| `mods/tab-drop/` | Drop overlay and Python helper for terminal and companion-note moves |
-| `mods/agent-notes/` | Autosaving per-agent notes editor |
+| `mods/drag-pane/` | Pane headers, inline Markdown notes and pane-to-tab dragging |
+| `mods/tab-drop/` | Drop overlay and Python helper for terminal moves, header visibility and legacy-note migration |
+| `mods/agent-notes/` | Legacy editor retained to safely migrate older saved notes panes |
 | `settings.json`, `keys.json` | Personal preferences and shortcuts |
 | `programs.json`, `my-icons/` | Codex icon override using the OpenAI logo |
 | `.gitignore` | Keeps generated files and runtime state local |

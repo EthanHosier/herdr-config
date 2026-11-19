@@ -37,6 +37,7 @@ export default class Tabs extends View {
         if (command === "preview-drop") this.openDrop({});
         if (command === "preview-detach") this.openDrop({ mode: "detach" });
         if (command === "new-codex") this.newCodex(cx);
+
       }
     });
     this.pressed = null;
@@ -94,6 +95,23 @@ export default class Tabs extends View {
       width: viewport.width / zoom, height: viewport.height / zoom, props });
   }
 
+  syncNotesHeaders(space) {
+    if (checking() || !layout()) return;
+    const active = space?.tabs.find(tab => tab.active);
+    const activeTerminals = new Set(panes().filter(p => p.tab === active?.id).map(p => p.terminal));
+    const expanded = terminals().some(t => activeTerminals.has(t.address) && t.labels?.["herdr.notes-header"] === "1");
+    const height = expanded ? 190 : 30;
+    const root = JSON.parse(JSON.stringify(layout()));
+    let changed = false;
+    const visit = node => {
+      const header = node.content?.pane?.header;
+      if (header?.content?.mod === "drag-pane" && header.height !== height) { header.height = height; changed = true; }
+      for (const child of node.children ?? []) visit(child);
+    };
+    visit(root);
+    if (changed) run("layout.set", { layout: root });
+  }
+
   // One tab per wheel notch. A touchpad or smooth-scrolling mouse sends many
   // small events per gesture: a short swipe or one smoothed notch (about
   // 25 px) switches one tab, a longer swipe keeps going a tab per 60 px, at
@@ -148,6 +166,7 @@ export default class Tabs extends View {
   render() {
     const t = theme();
     const space = spaces().find(p => p.active);
+    this.syncNotesHeaders(space);
     const shown = space?.tabs ?? [];
     const active = shown.findIndex(tab => tab.active);
     const selected = shown[active]?.id;

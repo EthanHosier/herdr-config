@@ -11,6 +11,7 @@ core = shutil.which("hc") or str(__import__("pathlib").Path.home() / ".local/bin
 NAME_LABEL = "herdr.drag-tab-name"
 NOTES_ID = "herdr.notes-id"
 NOTES_PANE = "herdr.notes-pane"
+NOTES_HEADER = "herdr.notes-header"
 
 
 def core_labels(terminal):
@@ -45,10 +46,8 @@ def open_notes(terminal, pane, focus=False):
     if not notes_id:
         notes_id = str(uuid.uuid4())
         set_label(terminal, NOTES_ID, notes_id)
-    result = call("pane.split", {"pane": pane, "direction": "down", "mod": "agent-notes",
-                                "props": {"terminal": terminal, "notesId": notes_id, "autofocus": focus}})
-    set_label(terminal, NOTES_PANE, result["pane"])
-    return result["pane"]
+    set_label(terminal, NOTES_HEADER, "1")
+    return pane
 
 
 def terminal_pane(terminal):
@@ -59,13 +58,14 @@ def toggle_notes(p):
     pane = terminal_pane(p["terminal"])
     if not pane:
         raise RuntimeError("This terminal no longer has a pane.")
-    if close_notes(p["terminal"]):
-        call("pane.focus", {"pane": pane["pane"]})
+    labels = core_labels(p["terminal"])
+    # Closing an old companion flushes its editor without deleting note text.
+    close_notes(p["terminal"])
+    if labels.get(NOTES_HEADER) == "1":
+        set_label(p["terminal"], NOTES_HEADER, "")
         return {"ok": True, "open": False}
-    if p.get("zoomed"):
-        call("pane.zoom", {"pane": pane["pane"]})
-    notes_pane = open_notes(p["terminal"], pane["pane"], focus=True)
-    return {"ok": True, "open": True, "pane": notes_pane}
+    open_notes(p["terminal"], pane["pane"])
+    return {"ok": True, "open": True, "pane": pane["pane"]}
 
 
 def terminal_name(terminal):

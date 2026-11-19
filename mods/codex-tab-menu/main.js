@@ -38,8 +38,7 @@ function items(p, git) {
       // no pane to split, zoom or close: its pane is the block's id.
       const targetPane = panes().find(pane => pane.pane === tg.pane);
       const inTab = Boolean(targetPane);
-      const notesPane = term?.labels?.["herdr.notes-pane"];
-      const notesOpen = Boolean(notesPane && panes().some(pane => pane.pane === notesPane && pane.mod === "agent-notes"));
+      const notesOpen = term?.labels?.["herdr.notes-header"] === "1";
       return [
         ...(inTab
           ? [
