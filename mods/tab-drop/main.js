@@ -1,6 +1,7 @@
+import { runPython } from "./python.js";
 import { View, div } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { props, closeOverlay, exec, appHome, notify, settings, checking } from "herdr";
+import { props, closeOverlay, exec, appHome, notify, settings, checking, window } from "herdr";
 
 export default class TabDrop extends View {
   init(_props, cx) {
@@ -38,7 +39,7 @@ export default class TabDrop extends View {
     cx.notify();
     cx.spawn(async cx => {
       try {
-        const r = await exec("python3", [appHome() + "/mods/tab-drop/move.py", JSON.stringify(args)], { timeout: 20000 });
+        const r = await runPython(exec, [appHome() + "/mods/tab-drop/move.py", JSON.stringify(args)], { timeout: 20000, platform: window().platform });
         if (r.code !== 0) throw new Error(r.stderr || r.stdout || "Move failed");
       } catch (e) {
         notify({ title: "Could not move tab", body: String(e), level: "error" });

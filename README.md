@@ -8,7 +8,7 @@ The custom **drag-splits** layout adds tab-to-split dragging, pane-to-tab draggi
 
 ## Set up on another machine
 
-Requires Git, Python 3 on PATH, [Herdr](https://herdr.dev) and Herdr Core (`hc`). Tested on macOS with Herdr **0.1.16**. The same config path is used on Linux, but Linux has not been tested. This setup is intended for macOS and Linux.
+Requires Git, Python 3.8+ available through a standard Python command, [Herdr](https://herdr.dev) and Herdr Core (`hc`). Tested on macOS with Herdr **0.1.16**. The same config path is used on Linux, but Linux has not been tested. This setup is intended for macOS and Linux.
 
 1. Install Herdr and open it once to finish setting up its core. Install Python 3 if necessary (`brew install python` on macOS).
 2. **Quit the Herdr window** before replacing its config folder. Run the following from another terminal. Existing configuration is preserved in a timestamped backup.
@@ -28,7 +28,7 @@ Requires Git, Python 3 on PATH, [Herdr](https://herdr.dev) and Herdr Core (`hc`)
 
    If installed elsewhere, run `herdr-app` from PATH instead. You can also select **drag-splits** in Herdr's layout settings.
 
-The repo includes `settings.json` and `keys.json`, so it carries the current preferences and shortcuts too, including 12px terminal text. The custom mods require `python3`, `herdr-app` and `hc`; the move helper also looks for Herdr CLIs under `~/.local/bin`.
+The repo includes `settings.json` and `keys.json`, so it carries the current preferences and shortcuts too, including 12px terminal text. The custom mods require a discoverable Python 3.8+ interpreter, `herdr-app` and `hc`; the move helper also looks for Herdr CLIs under `~/.local/bin`.
 
 For a second computer that should also push changes, use your own GitHub account's repository access, or fork the repo and clone your fork.
 
@@ -77,6 +77,23 @@ Notes belong to the live terminal, rather than a tab ID or split-pane ID. Visibi
 
 **Note contents are private local state and are excluded from Git.** Cloning this repo on another computer transfers the notes UI, not note contents. Remote terminals use the same UI feature, but the text is saved on the computer running the Herdr window; cross-computer note synchronization is not implemented.
 
+## Python discovery on Windows, macOS and Linux
+
+Every Python-backed action discovers a working interpreter before running its helper. On Windows it tries `py -3` first, then `python3` and `python`; on macOS/Linux it tries `python3`, `python`, then `py -3`. Versioned commands from `python3.14` through `python3.8` are also checked. Each candidate must actually execute and report Python 3.8+; Python 2, failed launchers and Store aliases that do not run Python are rejected.
+
+The helper runs using the discovered interpreter’s `sys.executable`, so a launcher or differently named command still selects the correct executable. Paths and arguments are passed separately, including paths with spaces. Discovery happens **on every action**, with no machine-specific path stored in Git or persistent cache. It runs on the computer hosting the Herdr UI; helpers control remote terminals through the local Herdr CLIs.
+
+All current Python consumers—tab/pane transfers and the notes menu—use this mechanism. A helper is never retried under a different interpreter after it starts, since that could repeat a terminal operation. If discovery fails, the UI reports how to fix PATH or install Python.
+
+Herdr restricts imports to each mod folder, so `lib/python.js` is the maintained source and each consuming mod ships a generated local `python.js`. No build step is needed after pulling this repo. For future Python-backed mods, import `runPython` from `./python.js` and use `runPython(exec, args, { platform: window().platform, timeout: 20000 })`. Regenerate and test copies with:
+
+```sh
+node scripts/sync-python.mjs
+node --test tests/python-discovery.test.mjs
+```
+
+Node is needed only for development/testing, not for running these mods. Windows discovery is covered by simulated tests; end-to-end Herdr operation has been tested on macOS, not Windows.
+
 ## If a new tab launches a different Codex
 
 On the machine where you expect Codex to run, compare `type -a codex` and `codex --version` in a plain terminal. Herdr loads the target machine’s shell configuration, but its agent launcher does not expand shell aliases. Use a shell function or executable wrapper if your normal `codex` command is an alias. Alternatively, add a `run` array to the existing `programs.codex` entry in `programs.json`, for example `"run": ["/path/to/preferred/codex"]`. Preserve the icon fields. That path must exist on every machine where the launcher is used, so a wrapper named on PATH is usually easier to share between machines.
@@ -122,6 +139,6 @@ Switching layouts leaves terminals running. The emergency reset shortcut is **Ct
 
 ## Access and license
 
-The custom mods run `python3`, `herdr-app` and `hc` to move terminals and retain names. They make no network requests. The tab bar also opens Herdr's built-in menus and panels.
+The custom mods discover and run a local Python 3 interpreter, `herdr-app` and `hc` to move terminals and retain names. They make no network requests. The tab bar also opens Herdr's built-in menus and panels.
 
 The custom layout and cloned mods derive from [Herdr app](https://github.com/herdrdev/herdr-app) 0.1.16, under [Apache-2.0](LICENSE). See [NOTICE](NOTICE) and [RECIPE.md](RECIPE.md).

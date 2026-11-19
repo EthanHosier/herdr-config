@@ -5,9 +5,10 @@
 // ↑/↓ move, Enter runs, Esc closes. An item is [label, command, args];
 // a command "worktree" opens the worktree dialog instead.
 
+import { runPython } from "./python.js";
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { run, props, closeOverlay, openOverlay, theme, keys, terminals, spaces, panes, exec, appHome, notify } from "herdr";
+import { run, props, closeOverlay, openOverlay, theme, keys, terminals, spaces, panes, exec, appHome, notify, window } from "herdr";
 
 // Where a space is now: its first terminal's live folder, else where it was made.
 function place(s) {
@@ -125,7 +126,7 @@ export default class Menu extends View {
       const args = { mode: "toggle-notes", ...it[2] };
       cx.spawn(async cx => {
         try {
-          const result = await exec("python3", [appHome() + "/mods/tab-drop/move.py", JSON.stringify(args)], { timeout: 20000 });
+          const result = await runPython(exec, [appHome() + "/mods/tab-drop/move.py", JSON.stringify(args)], { timeout: 20000, platform: window().platform });
           if (result.code !== 0) throw new Error(result.stderr || result.stdout);
         } catch (error) {
           notify({ title: "Could not toggle notes", body: String(error), level: "error" });
