@@ -63,7 +63,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 **New tabs:** only the tab right-click menu’s **New tab** action opens Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The top-bar **+** opens the tab-type selector. **Cmd+T** retains its original plain-terminal behavior. The launcher uses the configured Codex command from Herdr’s program table, defaulting to `codex` resolved by the target machine’s shell. It does not select a ChatGPT-bundled binary automatically. The launcher removes `--no-daemon` from Herdr’s suggested command, keeping Codex’s normal daemon behavior.
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
-- **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
+- **Split → tab:** drag a pane's bottom title bar or bottom-center grip into the top tab strip.
 - **Agent notes:** plain-text notes are always visible beneath each terminal, above its bottom title bar. They start at the minimum height (70px including the title strip), with no Show/Hide menu option. Type directly in the notes; text saves automatically. Drag the divider upward to make the notes taller or downward to shrink them; Escape cancels a resize. There is no separate notes pane to move.
 - **Cancel:** press Escape or release in an unhighlighted section.
 
@@ -78,6 +78,8 @@ Notes belong to the live terminal, rather than a tab ID or split-pane ID. Existi
 **Header sizing:** Herdr shares header height across panes in a layout. The minimum and initial height is 70px, including the 30px title strip. Dragging adjusts the height up to 600px. The resized value is saved locally as `agent-notes.notes-height`; older header-height preferences are not used for this new minimum-height default.
 
 **Note contents are private local state and are excluded from Git.** Cloning this repo on another computer transfers the notes UI, not note contents. Remote terminals use the same UI feature, but the text is saved on the computer running the Herdr window; cross-computer note synchronization is not implemented.
+
+The six-dot bottom-center grip appears when hovering over the title bar and replaces Herdr’s fixed top grip. Drag onto another pane’s center to swap, or its edge to place the pane beside it. Escape cancels.
 
 ## Python command on Windows, macOS and Linux
 
@@ -114,7 +116,8 @@ The context-menu launcher adds only the YOLO mode flag, `--dangerously-bypass-ap
 | `mods/drag-tabs/` | Tab bar and tab-to-split dragging |
 | `mods/rename-agent/` | Rename dialog that keeps a pane and its own tab in sync |
 | `mods/codex-tab-menu/` | Tab context menu with Codex as the New tab action |
-| `mods/drag-pane/` | Pane headers, inline plain-text notes and pane-to-tab dragging |
+| `mods/drag-pane/` | Bottom pane headers, notes and pane dragging |
+| `mods/pane-drop-zone/` | Transparent targets for swapping, splitting and detaching panes |
 | `mods/tab-drop/` | Drop overlay and Python helper for terminal moves, header visibility and legacy-note migration |
 | `mods/notes-resize/` | Drag capture for the notes height divider |
 | `mods/agent-notes/` | Legacy editor retained to safely migrate older saved notes panes |
@@ -127,6 +130,7 @@ Validate after editing mods:
 ```sh
 herdr-app check ~/.config/herdr-app/mods/drag-tabs
 herdr-app check ~/.config/herdr-app/mods/drag-pane
+herdr-app check ~/.config/herdr-app/mods/pane-drop-zone
 herdr-app check ~/.config/herdr-app/mods/tab-drop
 herdr-app check ~/.config/herdr-app/mods/codex-tab-menu
 herdr-app check ~/.config/herdr-app/mods/agent-notes
