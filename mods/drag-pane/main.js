@@ -55,6 +55,15 @@ export default class Pane extends View {
     if (!checking() && this.notesKey && this.notesLoaded) setShared(this.notesKey, this.input.value());
   }
 
+  startNotesResize(e, cx) {
+    cx.stop_propagation();
+    this.dragStart = null;
+    const viewport = globalThis.window.viewport_size(), zoom = settings().zoom || 1;
+    openOverlay({ mod: "notes-resize", kind: "window", frame: "none", at: { x: 0, y: 0 },
+      width: viewport.width / zoom, height: viewport.height / zoom,
+      props: { startY: e.position.y, startHeight: paneFrame(layout())?.header?.height ?? 190 } });
+  }
+
   startDrag(e, cx) {
     const start = this.dragStart;
     if (!start || Math.hypot(e.position.x - start.x, e.position.y - start.y) < 4) return;
@@ -163,6 +172,9 @@ export default class Pane extends View {
 
     return v_flex().size_full().min_h(0).bg(t.background).child(title)
       .when(notesOpen, el => el.child(v_flex().flex_1().min_h(0).px(12).py(6).gap(5).bg(t.surface).border_b(1).border_color(t.border)
-        .child(Textarea.new(this.input).flex_1().min_h(0).w_full().text_size(12).text_color(t.foreground))));
+        .child(Textarea.new(this.input).flex_1().min_h(0).w_full().text_size(12).text_color(t.foreground)))
+        .child(div().id(`resize-notes-${pane}`).h(6).w_full().flex_none().cursor_row_resize()
+          .bg(t.surface).border_t(1).border_color(t.border).hover(s => s.bg(t.selected).border_color(t.accent))
+          .on_mouse_down("left", (e, cx) => this.startNotesResize(e, cx))));
   }
 }
