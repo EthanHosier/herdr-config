@@ -6,9 +6,11 @@
 // the terminal's title, the folder, and the agent's status; buttons split, zoom and close
 // this pane. Props from the app: { pane, terminal }. Click: focus the pane.
 
+import { runPython } from "./python.js";
+import { buildDropLayout } from "./drop-layout.js";
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex, v_flex, Textarea, TextareaState } from "gpui-base";
-import { panes, props, run, theme, home, layout, openOverlay, settings, spaces, terminals, shared, setShared, checking } from "herdr";
+import { panes, props, run, theme, home, layout, openOverlay, settings, spaces, terminals, shared, setShared, checking, exec, appHome, window, notify } from "herdr";
 
 // Match the first visible tab frame, including the active child of a stack.
 function paneFrame(node) {
@@ -71,14 +73,28 @@ export default class Pane extends View {
     if (!start || Math.hypot(e.position.x - start.x, e.position.y - start.y) < 4) return;
     this.dragStart = null;
     const p = this.me();
-    if (!p?.terminal || panes().filter(other => other.tab === p.tab && other.terminal).length < 2) return;
-    const viewport = globalThis.window.viewport_size();
-    const zoom = settings().zoom || 1;
-    openOverlay({ mod: "tab-drop", kind: "window", frame: "none", at: { x: 0, y: 0 },
-      width: viewport.width / zoom, height: viewport.height / zoom,
-      props: { mode: "detach", source: p.tab, terminal: p.terminal,
-        sourceName: spaces().flatMap(s => s.tabs).find(t => t.id === p.tab)?.named
-          ? spaces().flatMap(s => s.tabs).find(t => t.id === p.tab).name : null } });
+    if (!p?.terminal || p.zoomed || panes().filter(other => other.tab === p.tab && other.terminal).length < 2) return;
+    if (this.openingDrag) return;
+    this.openingDrag = true;
+    const machine = spaces().find(s => s.tabs.some(tab => tab.id === p.tab))?.machine;
+    const tab = spaces().flatMap(s => s.tabs).find(tab => tab.id === p.tab);
+    const args = { source: p.tab, sourcePane: p.pane, terminal: p.terminal,
+      sourceName: terminals().find(t => t.address === p.terminal)?.labels?.["herdr.drag-tab-name"] ?? (tab?.named ? tab.name : null) };
+    cx.spawn(async cx => {
+      try {
+        const result = await runPython(exec, [appHome() + "/mods/tab-drop/move.py", JSON.stringify({ mode: "tab-tree", source: p.tab, machine })], { platform: window().platform, timeout: 10000 });
+        if (result.code !== 0) throw new Error(result.stderr || result.stdout);
+        if (!panes().some(other => other.pane === p.pane)) return;
+        const viewport = globalThis.window.viewport_size(), zoom = settings().zoom || 1;
+        const overlay = buildDropLayout(layout(), JSON.parse(result.stdout).root, args, machine, paneFrame(layout())?.gap ?? 8);
+        openOverlay({ kind: "window", frame: "none", at: { x: 0, y: 0 },
+          width: viewport.width / zoom, height: viewport.height / zoom, layout: overlay });
+      } catch (error) {
+        notify({ title: "Could not start pane move", body: String(error), level: "error" });
+      } finally {
+        this.openingDrag = false;
+      }
+    });
   }
 
   me() {
@@ -142,7 +158,7 @@ export default class Pane extends View {
     const bottom = paneFrame(layout())?.header?.position === "bottom";
     const title = h_flex()
       .id(`pane-head-${pane}`)
-      .h(30).w_full().flex_none()
+      .h(30).w_full().flex_none().relative()
       .px(10)
       .gap(8)
       .items_center()
@@ -165,7 +181,7 @@ export default class Pane extends View {
           props: { tab: "pane", target: { pane, terminal: p.terminal } } });
       }))
       .when(Boolean(pic), (el) => el.child(pic))
-      .child(div().flex_none().truncate().max_w(260).font_medium().text_color(t.foreground).when(Boolean(p.terminal) && panes().filter(other => other.tab === p.tab && other.terminal).length > 1, el => el.cursor_grab()).child(name))
+      .child(div().flex_none().truncate().max_w(260).font_medium().text_color(t.foreground).when(Boolean(p.terminal) && !p.zoomed && panes().filter(other => other.tab === p.tab && other.terminal).length > 1, el => el.cursor_grab()).child(name))
       .child(div().flex_1().truncate().text_color(t.dim).child(folder(p.cwd)))
       .when(st === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
       .when(st === "blocked", el => el.child(div().flex_none().px(6).h(18).flex().items_center().rounded(5).bg(t.blocked + "26").text_size(10.5).font_semibold().text_color(t.blocked).child("Needs you")))
@@ -175,6 +191,13 @@ export default class Pane extends View {
         .child(this.button(t, `ph-d-${pane}`, "split-down", "pane.split", { direction: "down", pane }))
         .child(this.button(t, `ph-z-${pane}`, p.zoomed ? "unzoom" : "zoom", "pane.zoom", { pane }))
         .child(this.button(t, `ph-x-${pane}`, "close", "pane.close", { pane })))
+      .when(Boolean(p.terminal) && !p.zoomed && panes().filter(other => other.tab === p.tab && other.terminal).length > 1, el => el
+        .child(h_flex().absolute().left(0).right(0).bottom(0).h(7).items_center().justify_center()
+          .child(div().id(`bottom-grip-${pane}`).w(46).h(7).flex().items_center().justify_center().cursor_grab()
+            .on_mouse_down("left", (e, cx) => { cx.stop_propagation(); this.dragStart = { x: e.position.x, y: e.position.y }; })
+            .on_mouse_move((e, cx) => this.startDrag(e, cx))
+            .on_mouse_up("left", () => { this.dragStart = null; })
+            .child(div().w(30).h(3).rounded(2).bg(t.dim)))))
       .when(p.mod === "agent-notes", el => el.child(this.button(t, `notes-close-${pane}`, "close", "pane.close", { pane })));
 
     const resizeHandle = div().id(`resize-notes-${pane}`).h(6).w_full().flex_none().cursor_row_resize()
