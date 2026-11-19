@@ -4,10 +4,68 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 
 app = shutil.which("herdr-app") or str(__import__("pathlib").Path.home() / ".local/bin/herdr-app")
 core = shutil.which("hc") or str(__import__("pathlib").Path.home() / ".local/bin/hc")
 NAME_LABEL = "herdr.drag-tab-name"
+NOTES_ID = "herdr.notes-id"
+NOTES_PANE = "herdr.notes-pane"
+
+
+def core_labels(terminal):
+    result = subprocess.run([core, "get", terminal], capture_output=True, text=True, timeout=8, check=True)
+    return json.loads(result.stdout).get("labels", {})
+
+
+def set_label(terminal, key, value):
+    subprocess.run([core, "label", terminal, key + "=" + value], capture_output=True, text=True, timeout=8, check=True)
+
+
+def close_notes(terminal):
+    pane = core_labels(terminal).get(NOTES_PANE)
+    if not pane:
+        return False
+    if any(x["pane"] == pane for _, tab in tabs() for x in tab["terminals"]):
+        raise RuntimeError("Refusing to close a terminal as a notes pane.")
+    try:
+        call("pane.close", {"pane": pane})
+    except RuntimeError as error:
+        message = str(error).lower()
+        if not any(text in message for text in ("no pane", "unknown pane", "not found")):
+            raise
+        set_label(terminal, NOTES_PANE, "")
+        return False
+    set_label(terminal, NOTES_PANE, "")
+    return True
+
+
+def open_notes(terminal, pane, focus=False):
+    notes_id = core_labels(terminal).get(NOTES_ID)
+    if not notes_id:
+        notes_id = str(uuid.uuid4())
+        set_label(terminal, NOTES_ID, notes_id)
+    result = call("pane.split", {"pane": pane, "direction": "down", "mod": "agent-notes",
+                                "props": {"terminal": terminal, "notesId": notes_id, "autofocus": focus}})
+    set_label(terminal, NOTES_PANE, result["pane"])
+    return result["pane"]
+
+
+def terminal_pane(terminal):
+    return next((x for _, tab in tabs() for x in tab["terminals"] if x["terminal"] == terminal), None)
+
+
+def toggle_notes(p):
+    pane = terminal_pane(p["terminal"])
+    if not pane:
+        raise RuntimeError("This terminal no longer has a pane.")
+    if close_notes(p["terminal"]):
+        call("pane.focus", {"pane": pane["pane"]})
+        return {"ok": True, "open": False}
+    if p.get("zoomed"):
+        call("pane.zoom", {"pane": pane["pane"]})
+    notes_pane = open_notes(p["terminal"], pane["pane"], focus=True)
+    return {"ok": True, "open": True, "pane": notes_pane}
 
 
 def terminal_name(terminal):
@@ -58,12 +116,15 @@ def keep(terminal, place):
 
 
 def move(p):
+    if p.get("mode") == "toggle-notes":
+        return toggle_notes(p)
     snapshot = tabs()
     source = next(((s, t) for s, t in snapshot if t["id"] == p["source"]), None)
     if p.get("mode") == "detach":
         if not source or len(source[1]["terminals"]) < 2 or not any(x["terminal"] == p["terminal"] for x in source[1]["terminals"]):
             raise RuntimeError("The terminal must belong to a split tab.")
         name = terminal_name(p["terminal"]) or p.get("sourceName")
+        had_notes = close_notes(p["terminal"])
         call("tab.select", {"id": p["source"]})
         call("terminal.park", {"terminal": p["terminal"]})
         wait_for(lambda snapshot: not any(x["terminal"] == p["terminal"] for _, t in snapshot for x in t["terminals"]))
@@ -72,6 +133,8 @@ def move(p):
         added = wait_for(lambda snapshot: next((t for _, t in snapshot if t["id"] != p["source"] and any(x["terminal"] == p["terminal"] for x in t["terminals"])), None))
         if name:
             call("tab.rename", {"id": added["id"], "name": name})
+        if had_notes:
+            open_notes(p["terminal"], next(x["pane"] for x in added["terminals"] if x["terminal"] == p["terminal"]))
         call("tab.select", {"id": added["id"]})
         return {"ok": True, "tab": added["id"]}
     target = next(((s, t) for s, t in snapshot if t["id"] == p["target"]), None)
@@ -82,8 +145,11 @@ def move(p):
         raise RuntimeError("The source tab changed. Only single-terminal tabs can be moved.")
     if not any(t["pane"] == p["targetPane"] for t in target[1]["terminals"]):
         raise RuntimeError("The destination pane no longer exists.")
+    target_terminal = next(t["terminal"] for t in target[1]["terminals"] if t["pane"] == p["targetPane"])
     if "sourceName" in p:
         remember_name(p["terminal"], p["sourceName"])
+    had_notes = close_notes(p["terminal"])
+    target_had_notes = close_notes(target_terminal)
     call("tab.select", {"id": p["target"]})
     call("pane.focus", {"pane": p["targetPane"]})
     if target[1].get("zoomed"):
@@ -97,11 +163,23 @@ def move(p):
         added = wait_for(lambda snapshot: next((x for _, t in snapshot if t["id"] == p["target"] for x in t["terminals"] if x["terminal"] == p["terminal"]), None))
         if p["edge"] in ("left", "up"):
             call("pane.swap", {"pane": added["pane"], "target": p["targetPane"]})
+        if target_had_notes:
+            open_notes(target_terminal, p["targetPane"])
+        if had_notes:
+            open_notes(p["terminal"], added["pane"])
         call("pane.focus", {"pane": added["pane"]})
     except Exception:
         # Recover as a tab if adoption failed, leaving the process running.
         if not any(x["terminal"] == p["terminal"] for _, t in tabs() for x in t["terminals"]):
             keep(p["terminal"], "tab")
+        if had_notes and not core_labels(p["terminal"]).get(NOTES_PANE):
+            recovered = terminal_pane(p["terminal"])
+            if recovered:
+                open_notes(p["terminal"], recovered["pane"])
+        if target_had_notes and not core_labels(target_terminal).get(NOTES_PANE):
+            recovered = terminal_pane(target_terminal)
+            if recovered:
+                open_notes(target_terminal, recovered["pane"])
         raise
     return {"ok": True, "pane": added["pane"]}
 

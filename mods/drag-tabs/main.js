@@ -2,7 +2,7 @@
 // Modified to add tab/pane dragging and preserve custom names.
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex, ScrollHandle } from "gpui-base";
-import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings, notify, nextCommand, checking, knownAgents } from "herdr";
+import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings, notify, nextCommand, checking, knownAgents, terminals } from "herdr";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -68,16 +68,19 @@ export default class Tabs extends View {
     if (!d || this.pressed === null || e.position.y - d.y < 4) return;
     const space = spaces().find(s => s.active);
     const source = space?.tabs.find(t => t.id === d.tab);
-    const own = panes().filter(p => p.tab === d.tab);
+    const allOwn = panes().filter(p => p.tab === d.tab);
+    const own = allOwn.filter(p => p.terminal);
+    const notePane = own.length === 1 && terminals().find(t => t.address === own[0].terminal)?.labels?.["herdr.notes-pane"];
+    const unrelated = allOwn.some(p => !p.terminal && !(p.mod === "agent-notes" && p.pane === notePane));
     const target = space?.tabs.find(t => t.active && t.id !== d.tab)
       ?? space?.tabs.find(t => t.id !== d.tab);
     this.pressed = null;
     this.dragStart = null;
-    if (!source || !target || own.length !== 1 || !own[0].terminal) {
+    if (!source || !target || own.length !== 1 || unrelated || !own[0].terminal) {
       notify({ title: "Drag to split", body: !target ? "Create another tab first, then drag one down into the workspace." : "Only tabs with one terminal can be moved into a split.", level: "info" });
       return;
     }
-    const dest = panes().find(p => p.tab === target.id && p.focused) ?? panes().find(p => p.tab === target.id);
+    const dest = panes().find(p => p.tab === target.id && p.terminal && p.focused) ?? panes().find(p => p.tab === target.id && p.terminal);
     if (!dest) return;
     run("tab.select", { id: target.id });
     this.openDrop({ source: d.tab, terminal: own[0].terminal, target: target.id,

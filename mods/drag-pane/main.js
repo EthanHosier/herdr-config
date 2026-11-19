@@ -8,7 +8,7 @@
 
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { panes, props, run, theme, home, layout, openOverlay, settings, spaces, terminals } from "herdr";
+import { panes, props, run, theme, home, layout, openOverlay, settings, spaces, terminals, exec, appHome, notify } from "herdr";
 
 // Match the first visible tab frame, including the active child of a stack.
 function paneFrame(node) {
@@ -40,12 +40,27 @@ function folder(cwd) {
 export default class Pane extends View {
   init() { this.hovered = false; this.dragStart = null; }
 
+  toggleNotes(pane, cx) {
+    if (this.notesBusy) return;
+    this.notesBusy = true;
+    cx.spawn(async cx => {
+      try {
+        const r = await exec("python3", [appHome() + "/mods/tab-drop/move.py", JSON.stringify({ mode: "toggle-notes", terminal: pane.terminal, zoomed: pane.zoomed })], { timeout: 20000 });
+        if (r.code !== 0) throw new Error(r.stderr || r.stdout);
+      } catch (e) {
+        notify({ title: "Could not toggle notes", body: String(e), level: "error" });
+      }
+      this.notesBusy = false;
+      cx.notify();
+    });
+  }
+
   startDrag(e, cx) {
     const start = this.dragStart;
     if (!start || Math.hypot(e.position.x - start.x, e.position.y - start.y) < 4) return;
     this.dragStart = null;
     const p = this.me();
-    if (!p?.terminal || panes().filter(other => other.tab === p.tab).length < 2) return;
+    if (!p?.terminal || panes().filter(other => other.tab === p.tab && other.terminal).length < 2) return;
     const viewport = globalThis.window.viewport_size();
     const zoom = settings().zoom || 1;
     openOverlay({ mod: "tab-drop", kind: "window", frame: "none", at: { x: 0, y: 0 },
@@ -79,10 +94,12 @@ export default class Pane extends View {
     const p = this.me();
     if (!p) return div();
     const savedName = terminals().find(t => t.address === p.terminal)?.labels?.["herdr.drag-tab-name"];
-    const name = savedName || ((p.program?.agent || p.program?.shell) && p.program.name) || p.title || p.program?.name || "shell";
+    const name = p.mod === "agent-notes" ? "Notes" : savedName || ((p.program?.agent || p.program?.shell) && p.program.name) || p.title || p.program?.name || "shell";
     const pic = icon(p.program, 14, t.dim);
     const st = p.status;
     const pane = p.pane;
+    const notesPane = terminals().find(t => t.address === p.terminal)?.labels?.["herdr.notes-pane"];
+    const notesOpen = notesPane && panes().some(other => other.pane === notesPane && other.mod === "agent-notes");
     const bottom = paneFrame(layout())?.header?.position === "bottom";
     return h_flex()
       .id(`pane-head-${pane}`)
@@ -104,15 +121,22 @@ export default class Pane extends View {
       .on_mouse_up("left", () => { this.dragStart = null; })
       .on_click(() => run("pane.focus", { pane }))
       .when(Boolean(pic), (el) => el.child(pic))
-      .child(div().flex_none().truncate().max_w(260).font_medium().text_color(t.foreground).when(Boolean(p.terminal) && panes().filter(other => other.tab === p.tab).length > 1, el => el.cursor_grab()).child(name))
+      .child(div().flex_none().truncate().max_w(260).font_medium().text_color(t.foreground).when(Boolean(p.terminal) && panes().filter(other => other.tab === p.tab && other.terminal).length > 1, el => el.cursor_grab()).child(name))
       .child(div().flex_1().truncate().text_color(t.dim).child(folder(p.cwd)))
       .when(st === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
       .when(st === "blocked", el => el.child(div().flex_none().px(6).h(18).flex().items_center().rounded(5).bg(t.blocked + "26").text_size(10.5).font_semibold().text_color(t.blocked).child("Needs you")))
       .when(st === "done", el => el.child(div().size(7).flex_none().rounded(4).bg(t.done)))
-      .when(this.hovered, el => el
+      .when(Boolean(p.terminal), el => el.child(div().id(`notes-${pane}`).flex_none().flex().items_center().gap(4).px(5).py(3).rounded(4).text_size(11)
+        .text_color(notesOpen ? t.accent : t.dim).bg(notesOpen ? t.selected : "#00000000")
+        .hover(s => s.bg(t.hover).text_color(t.foreground)).cursor_pointer()
+        .on_mouse_down("left", (_e, cx) => { this.dragStart = null; cx.stop_propagation(); })
+        .on_click((_e, cx) => { cx.stop_propagation(); this.toggleNotes(p, cx); })
+        .child(svg("mods/drag-pane/notes.svg").size(14)).child("Notes")))
+      .when(this.hovered && p.mod !== "agent-notes", el => el
         .child(this.button(t, `ph-r-${pane}`, "split-right", "pane.split", { direction: "right", pane }))
         .child(this.button(t, `ph-d-${pane}`, "split-down", "pane.split", { direction: "down", pane }))
         .child(this.button(t, `ph-z-${pane}`, p.zoomed ? "unzoom" : "zoom", "pane.zoom", { pane }))
-        .child(this.button(t, `ph-x-${pane}`, "close", "pane.close", { pane })));
+        .child(this.button(t, `ph-x-${pane}`, "close", "pane.close", { pane })))
+      .when(p.mod === "agent-notes", el => el.child(this.button(t, `notes-close-${pane}`, "close", "pane.close", { pane })));
   }
 }
