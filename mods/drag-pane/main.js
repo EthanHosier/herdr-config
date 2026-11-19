@@ -7,7 +7,7 @@
 // this pane. Props from the app: { pane, terminal }. Click: focus the pane.
 
 import { View, div, svg, image } from "gpui-kit";
-import { h_flex, v_flex, Textarea, TextareaState, TextView } from "gpui-base";
+import { h_flex, v_flex, Textarea, TextareaState } from "gpui-base";
 import { panes, props, run, theme, home, layout, openOverlay, settings, spaces, terminals, shared, setShared, checking } from "herdr";
 
 // Match the first visible tab frame, including the active child of a stack.
@@ -43,9 +43,8 @@ export default class Pane extends View {
     const labels = terminals().find(t => t.address === props()?.terminal)?.labels ?? {};
     this.notesId = labels["herdr.notes-id"];
     this.notesKey = this.notesId ? "agent-notes.text." + this.notesId : null;
-    this.input = TextareaState.new({ placeholder: "Write notes in Markdown…", value: (this.notesKey && shared(this.notesKey)) || "", rows: 4 });
+    this.input = TextareaState.new({ placeholder: "Write notes…", value: (this.notesKey && shared(this.notesKey)) || "", rows: 4 });
     this.notesLoaded = Boolean(this.notesKey);
-    this.editing = !this.input.value() || shared("agent-notes.mode." + this.notesId) === "edit";
     this.input.on("change", (_e, cx) => {
       if (this.notesKey && this.notesLoaded) setShared(this.notesKey, this.input.value());
       cx.notify();
@@ -104,7 +103,6 @@ export default class Pane extends View {
       cx.spawn(async cx => {
         if (this.notesKey !== key) return;
         this.input.set_value(shared(key) ?? "");
-        this.editing = !this.input.value() || shared("agent-notes.mode." + this.notesId) === "edit";
         this.notesLoaded = true;
         cx.notify();
       });
@@ -116,7 +114,6 @@ export default class Pane extends View {
       cx.spawn(async cx => {
         if (this.notesKey !== key) return;
         this.input.set_value(shared(key) ?? "");
-        this.editing = !this.input.value() || shared("agent-notes.mode." + this.notesId) === "edit";
         this.notesLoaded = true;
         cx.notify();
       });
@@ -166,18 +163,6 @@ export default class Pane extends View {
 
     return v_flex().size_full().min_h(0).bg(t.background).child(title)
       .when(notesOpen, el => el.child(v_flex().flex_1().min_h(0).px(12).py(6).gap(5).bg(t.surface).border_b(1).border_color(t.border)
-        .child(h_flex().flex_none().items_center().justify_between()
-          .child(div().text_size(10).font_semibold().text_color(t.muted).child("NOTES"))
-          .child(div().id(`edit-notes-${pane}`).px(5).py(2).rounded(3).text_size(11).text_color(t.muted).cursor_pointer()
-            .hover(s => s.bg(t.hover).text_color(t.foreground))
-            .on_click((_e, cx) => {
-              this.editing = !this.editing;
-              setShared("agent-notes.mode." + this.notesId, this.editing ? "edit" : "preview");
-              if (this.editing) this.input.focus();
-              cx.notify();
-            }).child(this.editing ? "Preview" : "Edit")))
-        .when(this.editing, el => el.child(Textarea.new(this.input).flex_1().min_h(0).w_full().text_size(12).text_color(t.foreground)))
-        .when(!this.editing, el => el.child(div().id(`markdown-notes-${pane}`).flex_1().min_h(0).overflow_y_scrollbar().text_size(12).text_color(t.foreground)
-          .child(TextView.markdown(`notes-${pane}`, this.input.value() || "*No notes yet. Choose Edit to add some.*"))))));
+        .child(Textarea.new(this.input).flex_1().min_h(0).w_full().text_size(12).text_color(t.foreground))));
   }
 }

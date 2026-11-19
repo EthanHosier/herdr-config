@@ -62,7 +62,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
-- **Agent notes:** right-click a terminal or its title bar and choose **Show notes** / **Hide notes**, directly above **Split right**. Markdown notes appear inside the expanded pane header. Choose **Edit** to change the source and **Preview** to render it. Text saves automatically; hiding notes does not delete it. There is no separate notes pane to move.
+- **Agent notes:** right-click a terminal or its title bar and choose **Show notes** / **Hide notes**, directly above **Split right**. Plain-text notes appear inside the expanded pane header and are always directly editable. Text saves automatically; hiding notes does not delete it. There is no separate notes pane to move.
 - **Cancel:** press Escape or release in an unhighlighted section.
 
 Custom names follow the terminal through repeated moves and appear in pane headers. Metadata is stored on the live terminal as `herdr.drag-tab-name`, outside this repo.
@@ -93,7 +93,7 @@ The context-menu launcher adds only the YOLO mode flag, `--dangerously-bypass-ap
 | `layouts/drag-splits.svg` | Layout settings preview |
 | `mods/drag-tabs/` | Tab bar and tab-to-split dragging |
 | `mods/codex-tab-menu/` | Tab context menu with Codex as the New tab action |
-| `mods/drag-pane/` | Pane headers, inline Markdown notes and pane-to-tab dragging |
+| `mods/drag-pane/` | Pane headers, inline plain-text notes and pane-to-tab dragging |
 | `mods/tab-drop/` | Drop overlay and Python helper for terminal moves, header visibility and legacy-note migration |
 | `mods/agent-notes/` | Legacy editor retained to safely migrate older saved notes panes |
 | `settings.json`, `keys.json` | Personal preferences and shortcuts |
