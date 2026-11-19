@@ -62,7 +62,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
-- **Agent notes:** click **Notes** in a terminal pane’s header to show or hide its notes beneath it. Text saves automatically; hiding or closing the notes pane does not delete it. Drag the divider to make the notes section smaller. Herdr initially gives a new companion pane half of its parent; the current public API does not expose an initial split-height setting.
+- **Agent notes:** right-click a terminal or its header and choose **Show notes** / **Hide notes**, directly above **Split right**. Text saves automatically; hiding or closing the notes pane does not delete it. Drag the divider to make the notes section smaller. Herdr initially gives a new companion pane half of its parent; the current public API does not expose an initial split-height setting.
 - **Cancel:** press Escape or release in an unhighlighted section.
 
 Custom names follow the terminal through repeated moves and appear in pane headers. Metadata is stored on the live terminal as `herdr.drag-tab-name`, outside this repo.

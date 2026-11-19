@@ -7,7 +7,7 @@
 
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { run, props, closeOverlay, openOverlay, theme, keys, terminals, spaces, panes, exec } from "herdr";
+import { run, props, closeOverlay, openOverlay, theme, keys, terminals, spaces, panes, exec, appHome, notify } from "herdr";
 
 // Where a space is now: its first terminal's live folder, else where it was made.
 function place(s) {
@@ -36,10 +36,14 @@ function items(p, git) {
       const toProgram = term?.labels?.["herdr.right-click"] === "program";
       // A terminal shown outside a tab (a layout terminal block, a window) has
       // no pane to split, zoom or close: its pane is the block's id.
-      const inTab = panes().some((pane) => pane.pane === tg.pane);
+      const targetPane = panes().find(pane => pane.pane === tg.pane);
+      const inTab = Boolean(targetPane);
+      const notesPane = term?.labels?.["herdr.notes-pane"];
+      const notesOpen = Boolean(notesPane && panes().some(pane => pane.pane === notesPane && pane.mod === "agent-notes"));
       return [
         ...(inTab
           ? [
+              ...(term ? [[notesOpen ? "Hide notes" : "Show notes", "agent-notes.toggle", { terminal: term.address, zoomed: targetPane.zoomed }]] : []),
               ["Split right", "pane.split", { direction: "right", pane: tg.pane }],
               ["Split down", "pane.split", { direction: "down", pane: tg.pane }],
               ["Zoom", "pane.zoom", { pane: tg.pane }],
@@ -82,6 +86,7 @@ function items(p, git) {
 }
 
 function menuIcon(command) {
+  if (command === "agent-notes.toggle") return "mods/drag-pane/notes.svg";
   if (command === "drag-tabs.new-codex") return "mods/workspace-chrome/plus.svg";
   const name = command.endsWith(".close") ? "x" : command.endsWith(".rename") ? "square-pen" : command.endsWith(".new") ? "plus" : command === "worktree" ? "git-branch" : command === "app.help" ? "terminal" : command === "app.theme" ? "settings" : command === "pane.split" ? "panel-right" : command === "pane.zoom" ? "square" : "terminal";
   return `mods/workspace-chrome/${name}.svg`;
@@ -114,7 +119,22 @@ export default class Menu extends View {
 
   choose(i, cx) {
     const it = items(props(), this.git)[i];
-    if (!it) return;
+    if (!it || this.busy) return;
+    if (it[1] === "agent-notes.toggle") {
+      this.busy = true;
+      const overlay = props()?.overlay;
+      const args = { mode: "toggle-notes", ...it[2] };
+      cx.spawn(async cx => {
+        try {
+          const result = await exec("python3", [appHome() + "/mods/tab-drop/move.py", JSON.stringify(args)], { timeout: 20000 });
+          if (result.code !== 0) throw new Error(result.stderr || result.stdout);
+        } catch (error) {
+          notify({ title: "Could not toggle notes", body: String(error), level: "error" });
+        }
+        closeOverlay(overlay);
+      });
+      return;
+    }
     closeOverlay(props()?.overlay);
     if (it[1] === "worktree") openOverlay({ mod: "worktree", kind: "dialog", ...(it[2].action === "open" ? { width: 560, height: 480 } : { width: 440, height: 260 }), props: it[2] });
     else run(it[1], it[2]);
