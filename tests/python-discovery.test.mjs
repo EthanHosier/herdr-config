@@ -29,7 +29,7 @@ test("Failed helpers are returned without retries", async () => {
 test("Every Python-consuming mod packages the same OS-based launcher", async () => {
   const source = await readFile(new URL("../lib/python.js", import.meta.url), "utf8");
   const banner = "// Generated from lib/python.js; update with node scripts/sync-python.mjs.\n";
-  for (const mod of ["tab-drop", "codex-tab-menu", "rename-agent"]) {
+  for (const mod of ["tab-drop", "rename-agent"]) {
     assert.equal(await readFile(new URL("../mods/" + mod + "/python.js", import.meta.url), "utf8"), banner + source);
   }
 });

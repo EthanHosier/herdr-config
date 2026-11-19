@@ -102,8 +102,8 @@ export default class Tabs extends View {
     if (checking() || !layout()) return;
     const active = space?.tabs.find(tab => tab.active);
     const activeTerminals = new Set(panes().filter(p => p.tab === active?.id).map(p => p.terminal));
-    const expanded = terminals().some(t => activeTerminals.has(t.address) && t.labels?.["herdr.notes-header"] === "1");
-    const height = expanded ? Math.max(70, Math.min(600, Number(shared("agent-notes.header-height")) || 190)) : 30;
+    const expanded = [...activeTerminals].some(Boolean);
+    const height = expanded ? Math.max(70, Math.min(600, Number(shared("agent-notes.notes-height")) || 70)) : 30;
     const root = JSON.parse(JSON.stringify(layout()));
     let changed = false;
     const visit = node => {

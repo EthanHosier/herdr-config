@@ -16,7 +16,7 @@ Drag a single-terminal tab down from the tab bar to split it beside another tab'
 
 The existing tab/header status treatment remains: a native spinner for working, a blocked indicator for attention, a done dot and ordinary idle titles. Custom names follow the terminal across moves and appear in its pane header. Header buttons still split, zoom and close panes. Herdr's native center grip still rearranges splits within a tab.
 
-The terminal/header right-click menu’s Show notes / Hide notes item, immediately above Split right, toggles `herdr.notes-header` on the clicked terminal. The frame header uses `position: "bottom"`. An always-editable plain-text textarea is drawn inside `drag-pane` below the terminal and above the 30px title strip. There are no Edit/Preview modes or Markdown rendering. Text autosaves to `shared("agent-notes.text." + notesId)` using the same UUID stored as `herdr.notes-id`. There is no separate pane to move. Native dragging therefore carries the notes along with the terminal header. Keep the old editor only for migration of already-saved companion panes. The tab bar sets the layout’s header height to the locally saved `agent-notes.header-height` (initially 190px) while any notes are shown in the active tab, or 30px otherwise. Herdr shares this height, so other panes in the tab reserve the same space even when their own notes are hidden.
+Notes are always displayed for terminal panes; there is no Show/Hide menu item. The frame header uses `position: "bottom"`. An always-editable plain-text textarea is drawn inside `drag-pane` below the terminal and above the 30px title strip, with no label or mode controls. Existing note UUID keys are retained. New terminals save under `agent-notes.text.terminal:<address>` until they receive a UUID, at which point saved text migrates without loss. There is no separate pane to move. The tab bar sets the shared frame height from `agent-notes.notes-height`, defaulting to the minimum 70px, capped at 600px. Herdr still shares this frame height across panes.
 
 ## Built from
 
@@ -40,9 +40,9 @@ Tab-to-split supports one terminal in the source tab, within the same space. Det
 - The overlay fills the window and the selected side highlight fills its height.
 - Installation backs up previous copies and leaves personal session state and settings untouched.
 
-- Notes save to disk, survive header hide/show, and retain their UUID and text through native swaps, all four split directions and detach.
+- Notes are always visible, save to disk, and retain their text through native swaps, all four split directions and detach.
 - Moving an agent preserves its process ID and name; notes are contained in its header and cannot be left as an orphan companion pane.
 
 - A 6px divider above header notes opens the transparent notes-resize capture overlay. Dragging upward grows the bottom notes section and downward shrinks it, changing the saved header height (70–600px), adjusted for app zoom; Escape restores the original height.
 
-- The terminal/header menu has Rename above Show notes/Hide notes. It opens rename-agent, which saves herdr.drag-tab-name and renames a standalone tab too. Split panels keep independent names; detaching restores the terminal name as its own tab caption. Explicitly named tabs never get replaced by an agent’s transient status title.
+- The terminal/header menu has Rename above Split right. It opens rename-agent, which saves herdr.drag-tab-name and renames a standalone tab too. Split panels keep independent names; detaching restores the terminal name as its own tab caption. Explicitly named tabs never get replaced by an agent’s transient status title.

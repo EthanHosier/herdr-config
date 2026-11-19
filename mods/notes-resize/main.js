@@ -3,8 +3,8 @@ import { props, shared, setShared, settings, closeOverlay, checking } from "herd
 
 export default class NotesResize extends View {
   init(_props, cx) {
-    this.initial = props()?.startHeight ?? 190;
-    this.original = shared("agent-notes.header-height") ?? this.initial;
+    this.initial = props()?.startHeight ?? 70;
+    this.original = shared("agent-notes.notes-height") ?? this.initial;
     this.startY = props()?.startY ?? 0;
     this.last = 0;
     this.focus = cx.focus_handle();
@@ -16,7 +16,7 @@ export default class NotesResize extends View {
     if (!force && now - this.last < 50) return;
     this.last = now;
     const height = Math.max(70, Math.min(600, Math.round(this.initial + (props()?.direction ?? 1) * (e.position.y - this.startY) / (settings().zoom || 1))));
-    if (shared("agent-notes.header-height") !== height) setShared("agent-notes.header-height", height);
+    if (shared("agent-notes.notes-height") !== height) setShared("agent-notes.notes-height", height);
   }
 
   render() {
@@ -33,7 +33,7 @@ export default class NotesResize extends View {
       .on_key_down((e, cx) => {
         if (e.key === "escape") {
           cx.stop_propagation();
-          setShared("agent-notes.header-height", this.original);
+          setShared("agent-notes.notes-height", this.original);
           closeOverlay(props()?.overlay);
         }
       });

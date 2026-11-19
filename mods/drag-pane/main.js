@@ -42,7 +42,8 @@ export default class Pane extends View {
     this.hovered = false; this.dragStart = null;
     const labels = terminals().find(t => t.address === props()?.terminal)?.labels ?? {};
     this.notesId = labels["herdr.notes-id"];
-    this.notesKey = this.notesId ? "agent-notes.text." + this.notesId : null;
+    this.notesKey = this.notesId ? "agent-notes.text." + this.notesId
+      : props()?.terminal ? "agent-notes.text.terminal:" + props().terminal : null;
     this.input = TextareaState.new({ placeholder: "Write notes…", value: (this.notesKey && shared(this.notesKey)) || "", rows: 4 });
     this.notesLoaded = Boolean(this.notesKey);
     this.input.on("change", (_e, cx) => {
@@ -61,7 +62,7 @@ export default class Pane extends View {
     const viewport = globalThis.window.viewport_size(), zoom = settings().zoom || 1;
     openOverlay({ mod: "notes-resize", kind: "window", frame: "none", at: { x: 0, y: 0 },
       width: viewport.width / zoom, height: viewport.height / zoom,
-      props: { startY: e.position.y, startHeight: paneFrame(layout())?.header?.height ?? 190,
+      props: { startY: e.position.y, startHeight: paneFrame(layout())?.header?.height ?? 70,
         direction: paneFrame(layout())?.header?.position === "bottom" ? -1 : 1 } });
   }
 
@@ -108,18 +109,21 @@ export default class Pane extends View {
     const alone = panes().filter(other => other.tab === p.tab && other.terminal).length === 1;
     const savedName = alone && ownTab?.named ? ownTab.name : labels["herdr.drag-tab-name"];
     if (labels["herdr.notes-id"] && labels["herdr.notes-id"] !== this.notesId) {
+      const previousKey = this.notesKey;
+      const previousText = this.input.value();
       this.notesId = labels["herdr.notes-id"];
       this.notesKey = "agent-notes.text." + this.notesId;
       this.notesLoaded = false;
       const key = this.notesKey;
       cx.spawn(async cx => {
         if (this.notesKey !== key) return;
-        this.input.set_value(shared(key) ?? "");
+        this.input.set_value(shared(key) ?? shared(previousKey) ?? previousText);
+        setShared(key, this.input.value());
         this.notesLoaded = true;
         cx.notify();
       });
     }
-    const notesOpen = labels["herdr.notes-header"] === "1";
+    const notesOpen = Boolean(p.terminal);
     if (notesOpen && !this.notesWasOpen && this.notesKey) {
       const key = this.notesKey;
       this.notesLoaded = false;

@@ -64,7 +64,7 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
 - **Split → tab:** drag a pane's title upward and release in the overlay's top strip. Use the title rather than Herdr's native top-center grip, which rearranges existing panes.
-- **Agent notes:** right-click a terminal or its title bar and choose **Show notes** / **Hide notes**, directly above **Split right**. Plain-text notes appear beneath the terminal, inside its bottom-positioned pane header, and are always directly editable. The title bar sits below the notes. Text saves automatically; hiding notes does not delete it. There is no separate notes pane to move. Drag the thin divider above the notes upward to make them taller or downward to make them shorter; Escape cancels a resize.
+- **Agent notes:** plain-text notes are always visible beneath each terminal, above its bottom title bar. They start at the minimum height (70px including the title strip), with no Show/Hide menu option. Type directly in the notes; text saves automatically. Drag the divider upward to make the notes taller or downward to shrink them; Escape cancels a resize. There is no separate notes pane to move.
 - **Cancel:** press Escape or release in an unhighlighted section.
 
 Custom names follow the terminal through repeated moves and appear in pane headers. Metadata is stored on the live terminal as `herdr.drag-tab-name`, outside this repo.
@@ -73,9 +73,9 @@ Tab-to-split moves support **single-terminal tabs in the same space**, including
 
 ### Notes persistence
 
-Notes belong to the live terminal, rather than a tab ID or split-pane ID. Visibility is stored as the terminal’s `herdr.notes-header` label. A stable UUID is kept as its `herdr.notes-id` label. Text is autosaved in this Herdr window’s local `shared.json`, under `agent-notes.text.<UUID>`. This survives layout switches, reloads, app restarts, hiding/showing, and our tab/split moves while retaining the terminal’s identity. Two agents have separate notes. Closing an agent retains its saved text in local state, but new terminals do not automatically inherit old notes. Older companion notes are closed and migrated when toggled, preserving their text.
+Notes belong to the live terminal, rather than a tab ID or split-pane ID. Existing notes retain their UUID from `herdr.notes-id` and the `agent-notes.text.<UUID>` key. New terminals save directly under `agent-notes.text.terminal:<address>` without launching Python just to initialize notes. If a UUID is assigned later, the saved text migrates to that key. All note text is autosaved in this Herdr window’s local `shared.json` and follows the terminal through tab/split moves and app restarts while its identity is retained. New terminals do not automatically inherit another terminal’s notes.
 
-**Header sizing:** Herdr shares header height across panes in a layout. The header expands to the saved height (190px initially) while any notes are shown in the active tab, and returns to 30px when none are shown. Dragging its top divider adjusts the expanded height between 70px and 600px, shared across note headers and saved in local state. Other panes in that tab reserve the same header height even when their own notes are hidden.
+**Header sizing:** Herdr shares header height across panes in a layout. The minimum and initial height is 70px, including the 30px title strip. Dragging adjusts the height up to 600px. The resized value is saved locally as `agent-notes.notes-height`; older header-height preferences are not used for this new minimum-height default.
 
 **Note contents are private local state and are excluded from Git.** Cloning this repo on another computer transfers the notes UI, not note contents. Remote terminals use the same UI feature, but the text is saved on the computer running the Herdr window; cross-computer note synchronization is not implemented.
 

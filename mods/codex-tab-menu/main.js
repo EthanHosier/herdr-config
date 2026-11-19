@@ -5,10 +5,9 @@
 // ↑/↓ move, Enter runs, Esc closes. An item is [label, command, args];
 // a command "worktree" opens the worktree dialog instead.
 
-import { runPython } from "./python.js";
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { run, props, closeOverlay, openOverlay, theme, keys, terminals, spaces, panes, exec, appHome, notify, window } from "herdr";
+import { run, props, closeOverlay, openOverlay, theme, keys, terminals, spaces, panes, exec } from "herdr";
 
 // Where a space is now: its first terminal's live folder, else where it was made.
 function place(s) {
@@ -39,12 +38,10 @@ function items(p, git) {
       // no pane to split, zoom or close: its pane is the block's id.
       const targetPane = panes().find(pane => pane.pane === tg.pane);
       const inTab = Boolean(targetPane);
-      const notesOpen = term?.labels?.["herdr.notes-header"] === "1";
       return [
         ...(inTab
           ? [
               ...(term ? [["Rename", "agent.rename", { terminal: term.address }]] : []),
-              ...(term ? [[notesOpen ? "Hide notes" : "Show notes", "agent-notes.toggle", { terminal: term.address, zoomed: targetPane.zoomed }]] : []),
               ["Split right", "pane.split", { direction: "right", pane: tg.pane }],
               ["Split down", "pane.split", { direction: "down", pane: tg.pane }],
               ["Zoom", "pane.zoom", { pane: tg.pane }],
@@ -87,7 +84,6 @@ function items(p, git) {
 }
 
 function menuIcon(command) {
-  if (command === "agent-notes.toggle") return "mods/drag-pane/notes.svg";
   if (command === "drag-tabs.new-codex") return "mods/workspace-chrome/plus.svg";
   const name = command.endsWith(".close") ? "x" : command.endsWith(".rename") ? "square-pen" : command.endsWith(".new") ? "plus" : command === "worktree" ? "git-branch" : command === "app.help" ? "terminal" : command === "app.theme" ? "settings" : command === "pane.split" ? "panel-right" : command === "pane.zoom" ? "square" : "terminal";
   return `mods/workspace-chrome/${name}.svg`;
@@ -133,21 +129,6 @@ export default class Menu extends View {
       closeOverlay(props()?.overlay);
       openOverlay({ mod: "rename-agent", kind: "dialog", width: 420, height: 220,
         props: { title: "Rename agent", terminal, tab: it[2].tab, value, hint: "This name follows the agent between panels and tabs." } });
-      return;
-    }
-    if (it[1] === "agent-notes.toggle") {
-      this.busy = true;
-      const overlay = props()?.overlay;
-      const args = { mode: "toggle-notes", ...it[2] };
-      cx.spawn(async cx => {
-        try {
-          const result = await runPython(exec, [appHome() + "/mods/tab-drop/move.py", JSON.stringify(args)], { timeout: 20000, platform: window().platform });
-          if (result.code !== 0) throw new Error(result.stderr || result.stdout);
-        } catch (error) {
-          notify({ title: "Could not toggle notes", body: String(error), level: "error" });
-        }
-        closeOverlay(overlay);
-      });
       return;
     }
     closeOverlay(props()?.overlay);

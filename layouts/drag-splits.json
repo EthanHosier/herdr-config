@@ -101,7 +101,7 @@
                       "mod": "drag-pane"
                     },
                     "reveal": "always",
-                    "height": 30,
+                    "height": 70,
                     "position": "bottom"
                   },
                   "background": "background",
