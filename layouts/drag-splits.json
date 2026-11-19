@@ -102,7 +102,7 @@
                     },
                     "reveal": "always",
                     "height": 30,
-                    "position": "top"
+                    "position": "bottom"
                   },
                   "background": "background",
                   "border": {

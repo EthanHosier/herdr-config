@@ -61,7 +61,8 @@ export default class Pane extends View {
     const viewport = globalThis.window.viewport_size(), zoom = settings().zoom || 1;
     openOverlay({ mod: "notes-resize", kind: "window", frame: "none", at: { x: 0, y: 0 },
       width: viewport.width / zoom, height: viewport.height / zoom,
-      props: { startY: e.position.y, startHeight: paneFrame(layout())?.header?.height ?? 190 } });
+      props: { startY: e.position.y, startHeight: paneFrame(layout())?.header?.height ?? 190,
+        direction: paneFrame(layout())?.header?.position === "bottom" ? -1 : 1 } });
   }
 
   startDrag(e, cx) {
@@ -170,11 +171,15 @@ export default class Pane extends View {
         .child(this.button(t, `ph-x-${pane}`, "close", "pane.close", { pane })))
       .when(p.mod === "agent-notes", el => el.child(this.button(t, `notes-close-${pane}`, "close", "pane.close", { pane })));
 
-    return v_flex().size_full().min_h(0).bg(t.background).child(title)
-      .when(notesOpen, el => el.child(v_flex().flex_1().min_h(0).px(12).py(6).gap(5).bg(t.surface).border_b(1).border_color(t.border)
-        .child(Textarea.new(this.input).flex_1().min_h(0).w_full().text_size(12).text_color(t.foreground)))
-        .child(div().id(`resize-notes-${pane}`).h(6).w_full().flex_none().cursor_row_resize()
-          .bg(t.surface).border_t(1).border_color(t.border).hover(s => s.bg(t.selected).border_color(t.accent))
-          .on_mouse_down("left", (e, cx) => this.startNotesResize(e, cx))));
+    const resizeHandle = div().id(`resize-notes-${pane}`).h(6).w_full().flex_none().cursor_row_resize()
+      .bg(t.surface).border_t(1).border_color(t.border).hover(s => s.bg(t.selected).border_color(t.accent))
+      .on_mouse_down("left", (e, cx) => this.startNotesResize(e, cx));
+    const notes = v_flex().flex_1().min_h(0).px(12).py(6).bg(t.surface)
+      .child(Textarea.new(this.input).flex_1().min_h(0).w_full().text_size(12).text_color(t.foreground));
+    return v_flex().size_full().min_h(0).bg(t.background)
+      .when(!bottom, el => el.child(title))
+      .when(notesOpen && bottom, el => el.child(resizeHandle).child(notes))
+      .when(notesOpen && !bottom, el => el.child(notes).child(resizeHandle))
+      .when(bottom, el => el.child(title));
   }
 }

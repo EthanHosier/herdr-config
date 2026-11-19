@@ -15,7 +15,7 @@ export default class NotesResize extends View {
     const now = Date.now();
     if (!force && now - this.last < 50) return;
     this.last = now;
-    const height = Math.max(70, Math.min(600, Math.round(this.initial + (e.position.y - this.startY) / (settings().zoom || 1))));
+    const height = Math.max(70, Math.min(600, Math.round(this.initial + (props()?.direction ?? 1) * (e.position.y - this.startY) / (settings().zoom || 1))));
     if (shared("agent-notes.header-height") !== height) setShared("agent-notes.header-height", height);
   }
 
