@@ -14,7 +14,7 @@ Only the tab right-click menu’s New tab action opens Codex with `--dangerously
 
 Drag a single-terminal tab down from the tab bar to split it beside another tab's focused pane. Left/right thirds select horizontal placement; the upper/lower thirds of the middle column select vertical placement. The center cancels. Release commits the move; Escape cancels. Drag a split pane's title to detach it; its overlay accepts the top 12% of the window, with a 72px minimum.
 
-The existing tab/header status treatment remains: a native spinner for working, a blocked indicator for attention, a done dot and ordinary idle titles. Custom names follow the terminal across moves and appear in its pane header. Header buttons still split, zoom and close panes. Root `movable: false` hides Herdr’s fixed top grip. A bottom-center grip in `drag-pane` opens a transparent layout overlay built from the core tab tree. `pane-drop-zone` targets swap on center drops, rearrange on edge drops, or detach on the tab strip.
+The existing tab/header status treatment remains: a native spinner for working, a blocked indicator for attention, a done dot and ordinary idle titles. Custom names follow the terminal across moves and appear in its pane header. Header buttons still split, zoom and close panes. Herdr's native center grip still rearranges splits within a tab.
 
 Notes are always displayed for terminal panes; there is no Show/Hide menu item. The frame header uses `position: "bottom"`. An always-editable plain-text textarea is drawn inside `drag-pane` below the terminal and above the 30px title strip, with no label or mode controls. Existing note UUID keys are retained. New terminals save under `agent-notes.text.terminal:<address>` until they receive a UUID, at which point saved text migrates without loss. There is no separate pane to move. The tab bar sets the shared frame height from `agent-notes.notes-height`, defaulting to the minimum 70px, capped at 600px. Herdr still shares this frame height across panes.
 
@@ -32,7 +32,7 @@ Tab-to-split supports one terminal in the source tab, within the same space. Det
 
 ## Done when
 
-- All eight mods pass `herdr-app check`.
+- All seven mods pass `herdr-app check`.
 - Live terminal moves work to the left, right, above and below.
 - Detaching creates a separate tab without changing the terminal process ID.
 - Explicit names survive repeated moves and subsequent renames; clearing a name clears the saved metadata.

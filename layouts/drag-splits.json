@@ -185,6 +185,5 @@
     16
   ],
   "preview": "layouts/drag-splits.svg",
-  "terminal_menu": "codex-tab-menu",
-  "movable": false
+  "terminal_menu": "codex-tab-menu"
 }

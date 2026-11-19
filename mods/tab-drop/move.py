@@ -5,8 +5,6 @@ import subprocess
 import sys
 import time
 import uuid
-import queue
-import threading
 
 app = shutil.which("herdr-app") or str(__import__("pathlib").Path.home() / ".local/bin/herdr-app")
 core = shutil.which("hc") or str(__import__("pathlib").Path.home() / ".local/bin/hc")
@@ -130,51 +128,7 @@ def keep(terminal, place):
             time.sleep(0.1)
 
 
-def tab_tree(p):
-    """Read the split tree through the public core API without changing it."""
-    params = {"name": "herdr-app"}
-    if p.get("machine"):
-        params["on"] = p["machine"]
-    process = subprocess.Popen([core, "connect"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
-    try:
-        request = {"jsonrpc": "2.0", "id": 1, "method": "doc.get", "params": params}
-        process.stdin.write((json.dumps(request) + "\n").encode()); process.stdin.flush()
-        responses = queue.Queue()
-        def read_lines():
-            for line in process.stdout:
-                responses.put(line)
-            responses.put(None)
-        threading.Thread(target=read_lines, daemon=True).start()
-        deadline = time.monotonic() + 8
-        while time.monotonic() < deadline:
-            try:
-                line = responses.get(timeout=max(0.001, deadline - time.monotonic()))
-            except queue.Empty:
-                break
-            if line is None:
-                break
-            reply = json.loads(line)
-            if reply.get("id") != 1:
-                continue
-            if "error" in reply:
-                raise RuntimeError(str(reply["error"]))
-            for space in (reply["result"].get("value") or {}).get("spaces", []):
-                for tab in space["tabs"]:
-                    if tab["id"] == p["source"].split("/")[-1]:
-                        return {"root": tab["root"]}
-            raise RuntimeError("The source tab no longer exists.")
-        raise RuntimeError("Timed out reading the pane layout.")
-    finally:
-        process.terminate()
-        try:
-            process.wait(timeout=1)
-        except subprocess.TimeoutExpired:
-            process.kill(); process.wait()
-
-
 def move(p):
-    if p.get("mode") == "tab-tree":
-        return tab_tree(p)
     if p.get("mode") == "rename-agent":
         return rename_agent(p)
     if p.get("mode") == "toggle-notes":
@@ -199,17 +153,14 @@ def move(p):
         call("tab.select", {"id": added["id"]})
         return {"ok": True, "tab": added["id"]}
     target = next(((s, t) for s, t in snapshot if t["id"] == p["target"]), None)
-    rearrange = p.get("mode") == "rearrange"
-    if not source or not target or source[0]["id"] != target[0]["id"] or (source[1]["id"] == target[1]["id"] and not rearrange):
+    if not source or not target or source[0]["id"] != target[0]["id"] or source[1]["id"] == target[1]["id"]:
         raise RuntimeError("Source and destination must be different tabs in the same space.")
     terminals = source[1]["terminals"]
-    if (not rearrange and len(terminals) != 1) or not any(t["terminal"] == p["terminal"] for t in terminals):
+    if len(terminals) != 1 or terminals[0]["terminal"] != p["terminal"]:
         raise RuntimeError("The source tab changed. Only single-terminal tabs can be moved.")
     if not any(t["pane"] == p["targetPane"] for t in target[1]["terminals"]):
         raise RuntimeError("The destination pane no longer exists.")
     target_terminal = next(t["terminal"] for t in target[1]["terminals"] if t["pane"] == p["targetPane"])
-    if target_terminal == p["terminal"]:
-        raise RuntimeError("Choose a different destination pane.")
     if "sourceName" in p:
         remember_name(p["terminal"], p["sourceName"])
     had_notes = close_notes(p["terminal"])
