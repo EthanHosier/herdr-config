@@ -104,7 +104,9 @@ export default class Pane extends View {
     const p = this.me();
     if (!p) return div();
     const labels = terminals().find(t => t.address === p.terminal)?.labels ?? {};
-    const savedName = labels["herdr.drag-tab-name"];
+    const ownTab = spaces().flatMap(space => space.tabs).find(tab => tab.id === p.tab);
+    const alone = panes().filter(other => other.tab === p.tab && other.terminal).length === 1;
+    const savedName = alone && ownTab?.named ? ownTab.name : labels["herdr.drag-tab-name"];
     if (labels["herdr.notes-id"] && labels["herdr.notes-id"] !== this.notesId) {
       this.notesId = labels["herdr.notes-id"];
       this.notesKey = "agent-notes.text." + this.notesId;

@@ -43,6 +43,7 @@ function items(p, git) {
       return [
         ...(inTab
           ? [
+              ...(term ? [["Rename", "agent.rename", { terminal: term.address }]] : []),
               ...(term ? [[notesOpen ? "Hide notes" : "Show notes", "agent-notes.toggle", { terminal: term.address, zoomed: targetPane.zoomed }]] : []),
               ["Split right", "pane.split", { direction: "right", pane: tg.pane }],
               ["Split down", "pane.split", { direction: "down", pane: tg.pane }],
@@ -62,7 +63,7 @@ function items(p, git) {
     }
     case "tab":
       return [
-        ["Rename", "tab.rename", { id: tg.id }],
+        ["Rename", "agent.rename", { tab: tg.id }],
         ["New tab", "drag-tabs.new-codex", {}],
         ["Close", "tab.close", { id: tg.id }],
       ];
@@ -120,6 +121,20 @@ export default class Menu extends View {
   choose(i, cx) {
     const it = items(props(), this.git)[i];
     if (!it || this.busy) return;
+    if (it[1] === "agent.rename") {
+      const p = it[2].terminal ? panes().find(p => p.terminal === it[2].terminal)
+        : panes().find(p => p.tab === it[2].tab && p.terminal && p.focused) ?? panes().find(p => p.tab === it[2].tab && p.terminal);
+      const terminal = it[2].terminal ?? p?.terminal;
+      const tab = spaces().flatMap(s => s.tabs).find(t => t.id === (it[2].tab ?? p?.tab));
+      if (!terminal) return;
+      const saved = terminals().find(t => t.address === terminal)?.labels?.["herdr.drag-tab-name"];
+      const alone = panes().filter(other => other.tab === p?.tab && other.terminal).length === 1;
+      const value = (it[2].tab || alone) && tab?.named ? tab.name : saved ?? "";
+      closeOverlay(props()?.overlay);
+      openOverlay({ mod: "rename-agent", kind: "dialog", width: 420, height: 220,
+        props: { title: "Rename agent", terminal, tab: it[2].tab, value, hint: "This name follows the agent between panels and tabs." } });
+      return;
+    }
     if (it[1] === "agent-notes.toggle") {
       this.busy = true;
       const overlay = props()?.overlay;

@@ -32,7 +32,7 @@ Tab-to-split supports one terminal in the source tab, within the same space. Det
 
 ## Done when
 
-- All six mods pass `herdr-app check`.
+- All seven mods pass `herdr-app check`.
 - Live terminal moves work to the left, right, above and below.
 - Detaching creates a separate tab without changing the terminal process ID.
 - Explicit names survive repeated moves and subsequent renames; clearing a name clears the saved metadata.
@@ -44,3 +44,5 @@ Tab-to-split supports one terminal in the source tab, within the same space. Det
 - Moving an agent preserves its process ID and name; notes are contained in its header and cannot be left as an orphan companion pane.
 
 - A 6px divider above header notes opens the transparent notes-resize capture overlay. Dragging upward grows the bottom notes section and downward shrinks it, changing the saved header height (70–600px), adjusted for app zoom; Escape restores the original height.
+
+- The terminal/header menu has Rename above Show notes/Hide notes. It opens rename-agent, which saves herdr.drag-tab-name and renames a standalone tab too. Split panels keep independent names; detaching restores the terminal name as its own tab caption. Explicitly named tabs never get replaced by an agent’s transient status title.

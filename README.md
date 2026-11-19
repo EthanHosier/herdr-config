@@ -58,6 +58,8 @@ New custom mods, layouts and themes are tracked by default. The `.gitignore` exc
 
 ## Use the layout
 
+**Rename an agent:** right-click its terminal or title bar and choose **Rename**. The pane name is also used when that agent is in its own tab, and survives moves. Right-click a tab → **Rename** updates the matching agent too. In a split tab, pane names remain independent; renaming one pane does not rename the others or their shared tab.
+
 **New tabs:** only the tab right-click menu’s **New tab** action opens Codex in YOLO mode (approvals and sandboxing disabled) in this layout. The top-bar **+** opens the tab-type selector. **Cmd+T** retains its original plain-terminal behavior. The launcher uses the configured Codex command from Herdr’s program table, defaulting to `codex` resolved by the target machine’s shell. It does not select a ChatGPT-bundled binary automatically. The launcher removes `--no-daemon` from Herdr’s suggested command, keeping Codex’s normal daemon behavior.
 
 - **Tab → split:** select the destination tab, then drag another tab downward into the workspace. Release in the left, right, upper or lower highlighted section. If dragging the active tab, another tab in the same space becomes the destination.
@@ -110,6 +112,7 @@ The context-menu launcher adds only the YOLO mode flag, `--dangerously-bypass-ap
 | `layouts/drag-splits.json` | Custom layout based on Herdr's main layout |
 | `layouts/drag-splits.svg` | Layout settings preview |
 | `mods/drag-tabs/` | Tab bar and tab-to-split dragging |
+| `mods/rename-agent/` | Rename dialog that keeps a pane and its own tab in sync |
 | `mods/codex-tab-menu/` | Tab context menu with Codex as the New tab action |
 | `mods/drag-pane/` | Pane headers, inline plain-text notes and pane-to-tab dragging |
 | `mods/tab-drop/` | Drop overlay and Python helper for terminal moves, header visibility and legacy-note migration |
@@ -128,6 +131,7 @@ herdr-app check ~/.config/herdr-app/mods/tab-drop
 herdr-app check ~/.config/herdr-app/mods/codex-tab-menu
 herdr-app check ~/.config/herdr-app/mods/agent-notes
 herdr-app check ~/.config/herdr-app/mods/notes-resize
+herdr-app check ~/.config/herdr-app/mods/rename-agent
 ```
 
 ## Return to the default UI

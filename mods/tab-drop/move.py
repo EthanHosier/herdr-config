@@ -73,6 +73,19 @@ def terminal_name(terminal):
     return json.loads(result.stdout).get("labels", {}).get(NAME_LABEL)
 
 
+def rename_agent(p):
+    terminal = p.get("terminal")
+    current = next((tab for _, tab in tabs() if any(t["terminal"] == terminal for t in tab["terminals"])), None)
+    if not terminal or not current:
+        raise RuntimeError("This agent no longer has a pane.")
+    name = p["name"].strip()
+    remember_name(terminal, name)
+    # Separate panels keep separate names. Its own tab uses that same name.
+    if p.get("tab") == current["id"] or len(current["terminals"]) == 1:
+        call("tab.rename", {"id": current["id"], "name": name})
+    return {"ok": True, "name": name}
+
+
 def remember_name(terminal, name):
     subprocess.run([core, "label", terminal, NAME_LABEL + "=" + (name or "")], capture_output=True, text=True, timeout=8, check=True)
 
@@ -116,6 +129,8 @@ def keep(terminal, place):
 
 
 def move(p):
+    if p.get("mode") == "rename-agent":
+        return rename_agent(p)
     if p.get("mode") == "toggle-notes":
         return toggle_notes(p)
     snapshot = tabs()

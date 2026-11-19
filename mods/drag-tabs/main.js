@@ -20,7 +20,10 @@ const clean = (s) => (s ?? "").replace(/^[^\p{L}\p{N}\p{Ps}\p{Pi}]+/u, "").repla
 // title, as the agents list does; a name the person gave stays.
 function label(tab, lead) {
   const prog = lead?.program?.name;
-  const base = tab.named ? tab.name : prog ?? "Terminal";
+  if (tab.named) return tab.name;
+  const savedName = terminals().find(t => t.address === lead?.terminal)?.labels?.["herdr.drag-tab-name"];
+  if (savedName) return savedName;
+  const base = prog ?? "Terminal";
   if (!lead?.program?.agent) return base;
   const live = clean(lead.title);
   // clean() would strip a path's leading ~ or /: test the title with only its status glyph gone.
